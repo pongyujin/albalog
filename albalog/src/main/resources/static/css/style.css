@@ -1,0 +1,1021 @@
+/* 믿GO알바 - Demo UI (Mobile-first) */
+:root{
+  --bg:#f2f4f8;
+  --card:#ffffff;
+  --text:#0f172a;
+  --muted:#64748b;
+  --line:#e5e7eb;
+  --pill:#eef2ff;
+  --nav:#ffffff;
+  --shadow: 0 10px 25px rgba(15, 23, 42, .08);
+  --shadow2: 0 8px 18px rgba(15, 23, 42, .10);
+  --primary:#1f3a8a;
+  --primary2:#233b9b;
+  --accent:#fbbf24;
+  --danger:#ef4444;
+  --ok:#10b981;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+    "Noto Sans KR", "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app{
+  max-width: 420px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: var(--bg);
+  position: relative;
+  padding-bottom: 76px; /* bottom nav space */
+}
+
+/* Header */
+header{
+  position: sticky;
+  top:0;
+  z-index: 10;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(229,231,235,.7);
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding: 12px 14px;
+}
+
+.logo-mark{
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: #fbbf24;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight: 900;
+  color:#111827;
+  flex: 0 0 auto;
+}
+
+.logo-text-wrap{
+  line-height: 1.1;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.logo-main{
+  font-weight: 900;
+  letter-spacing: -0.2px;
+}
+.logo-sub{
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 3px;
+  white-space: nowrap;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
+.header-right{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex: 0 0 auto;
+}
+.header-pill{
+  display:none;
+  padding: 7px 10px;
+  background: #eef2ff;
+  color: var(--primary);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.header-btn{
+  border: none;
+  background: #111827;
+  color: #fff;
+  padding: 9px 12px;
+  border-radius: 999px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.header-btn:active{transform: translateY(1px)}
+
+/* Main layout */
+main{padding: 12px 14px 16px}
+
+/* Screens */
+.screen{display:none; animation: fadeIn .18s ease-out}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:.2; transform: translateY(4px)}to{opacity:1; transform: translateY(0)}}
+
+/* Region row */
+.region-row{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 12px;
+  padding: 6px 0 10px;
+}
+.trust-badge{
+  font-size: 14px;
+  color: var(--muted);
+}
+.trust-badge b{color: var(--primary); font-weight: 900}
+.region-pill{
+  padding: 10px 12px;
+  background: #f1f5f9;
+  border: 1px solid rgba(226,232,240,.9);
+  border-radius: 999px;
+  font-weight: 800;
+  color: #1e293b;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.region-pill:active{transform: translateY(1px)}
+
+/* Search */
+.search-box{
+  background: #ffffff;
+  border: 1px solid rgba(226,232,240,.9);
+  border-radius: 14px;
+  padding: 12px 12px;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  box-shadow: 0 2px 10px rgba(15,23,42,.04);
+}
+.search-box span{opacity:.65}
+.search-box input{
+  border:none;
+  outline:none;
+  width: 100%;
+  font-size: 14px;
+}
+
+/* Chips */
+.chips{
+  display:flex;
+  gap: 8px;
+  margin-top: 12px;
+  overflow:auto;
+  padding-bottom: 2px;
+}
+.chip{
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: #e5e7eb;
+  color: #334155;
+  font-weight: 900;
+  font-size: 13px;
+  cursor: pointer;
+  user-select:none;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+.chip.active{
+  background: #111827;
+  color: #fff;
+}
+
+/* Slider */
+.slider-wrapper{
+  margin-top: 14px;
+  overflow:hidden;
+  border-radius: 18px;
+  box-shadow: var(--shadow);
+}
+.slider-banner{
+  display:flex;
+  width: 200%;
+  transition: transform .35s ease;
+}
+.banner-slide{
+  width: 50%;
+  padding: 18px 16px;
+  background: radial-gradient(100% 120% at 0% 0%, #1f2937 0%, #0b1220 100%);
+  color: #fff;
+  min-height: 110px;
+}
+.banner-slide.blue{
+  background: radial-gradient(100% 120% at 0% 0%, #2b4cff 0%, #1e3a8a 75%);
+}
+.banner-title{
+  font-weight: 900;
+  font-size: 18px;
+  letter-spacing: -0.3px;
+}
+.banner-desc{
+  margin-top: 8px;
+  opacity: .82;
+  font-size: 13px;
+}
+.banner-tag{
+  margin-top: 12px;
+  display:inline-flex;
+  gap: 6px;
+  align-items:center;
+  background: rgba(255,255,255,.16);
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+/* Section titles */
+.section-title-row{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap: 10px;
+  margin: 16px 0 10px;
+}
+.section-title{
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: -0.2px;
+}
+.section-sub{
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.link-small{
+  color: var(--primary);
+  font-weight: 900;
+  font-size: 12px;
+  cursor:pointer;
+  user-select:none;
+}
+
+/* Cards */
+.job-card{
+  background: var(--card);
+  border: 1px solid rgba(226,232,240,.85);
+  border-radius: 16px;
+  padding: 14px 14px;
+  box-shadow: 0 2px 12px rgba(15,23,42,.04);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.job-card:active{transform: translateY(1px)}
+.job-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap: 10px;
+}
+.job-title{
+  font-weight: 900;
+  font-size: 16px;
+  letter-spacing: -0.2px;
+}
+.job-company{
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+.job-meta{
+  margin-top: 10px;
+  color: #475569;
+  font-size: 12px;
+  font-weight: 700;
+  display:flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.badge{
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  border: 1px solid rgba(226,232,240,.8);
+}
+.badge.urgent{
+  background: #fff7ed;
+  border-color: #fed7aa;
+  color: #9a3412;
+  font-weight: 900;
+}
+.badge.pay{
+  background: #ecfeff;
+  border-color: #a5f3fc;
+  color: #155e75;
+}
+.badge.star{
+  background: #fffbeb;
+  border-color: #fde68a;
+  color: #92400e;
+}
+
+/* Empty state */
+.empty{
+  background: rgba(255,255,255,.7);
+  border: 1px dashed rgba(148,163,184,.8);
+  color: #475569;
+  padding: 14px;
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 13px;
+}
+
+/* Buttons + inputs */
+.input-group{margin-top: 12px}
+.input-group label{
+  display:block;
+  font-weight: 900;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.input-group input, .input-group textarea{
+  width:100%;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(226,232,240,.9);
+  background: #fff;
+  outline: none;
+  font-size: 14px;
+}
+.input-group textarea{min-height: 120px; resize: vertical}
+
+.btn{
+  width:100%;
+  border:none;
+  padding: 12px 12px;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  margin-top: 10px;
+}
+.btn:active{transform: translateY(1px)}
+.btn.primary{background: var(--primary); color:#fff}
+.btn.secondary{background: #111827; color:#fff}
+.btn.outline{background: transparent; border: 1px solid rgba(148,163,184,.7); color:#0f172a}
+.btn.danger{background: var(--danger); color:#fff}
+
+/* Detail */
+.detail-pay{
+  margin-top: 10px;
+  font-weight: 900;
+  font-size: 18px;
+}
+.detail-meta{
+  margin-top: 8px;
+  color: #475569;
+  font-weight: 800;
+  font-size: 13px;
+}
+.detail-desc{
+  margin-top: 14px;
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid rgba(226,232,240,.85);
+  border-radius: 16px;
+  color: #334155;
+  line-height: 1.55;
+  font-weight: 700;
+}
+.detail-reviews{margin-top: 14px}
+.review-card{
+  background: #fff;
+  border: 1px solid rgba(226,232,240,.85);
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.review-top{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap: 10px;
+}
+.review-name{font-weight: 900}
+.review-text{margin-top: 8px; color:#334155; font-weight: 700; font-size: 13px; line-height: 1.5}
+
+/* Bottom nav */
+.bottom-nav{
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: min(420px, 100%);
+  background: rgba(255,255,255,.96);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(226,232,240,.8);
+  display:flex;
+  justify-content:space-around;
+  padding: 8px 8px 10px;
+  z-index: 20;
+}
+.nav-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap: 4px;
+  font-size: 12px;
+  color: #64748b;
+  font-weight: 900;
+  cursor:pointer;
+  user-select:none;
+  padding: 6px 10px;
+  border-radius: 12px;
+}
+.nav-item.active{
+  color:#111827;
+  background: #f1f5f9;
+}
+.nav-item span{font-size: 18px}
+
+/* Region bottom sheet */
+.region-sheet-backdrop{
+  position: fixed;
+  inset: 0;
+  background: rgba(15,23,42,.45);
+  display:none;
+  align-items:flex-end;
+  justify-content:center;
+  z-index: 50;
+}
+.region-sheet-backdrop.show{display:flex}
+.region-sheet{
+  width: min(420px, 100%);
+  background: #fff;
+  border-radius: 18px 18px 0 0;
+  padding: 10px 14px 16px;
+  box-shadow: var(--shadow2);
+  animation: sheetUp .2s ease-out;
+}
+@keyframes sheetUp{from{transform: translateY(16px); opacity:.5}to{transform: translateY(0); opacity:1}}
+.sheet-handle{
+  width: 48px; height: 5px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  margin: 6px auto 10px;
+}
+.sheet-title{font-weight: 900; font-size: 16px}
+.sheet-sub{color: var(--muted); font-weight: 700; font-size: 12px; margin-top: 4px}
+
+.region-group{margin-top: 12px}
+.region-group-title{font-weight: 900; margin-bottom: 8px}
+.region-chip-row{display:flex; flex-wrap: wrap; gap: 8px}
+.region-chip{
+  border: 1px solid rgba(226,232,240,.9);
+  background: #f8fafc;
+  padding: 10px 12px;
+  border-radius: 999px;
+  font-weight: 900;
+  cursor:pointer;
+}
+.region-chip:active{transform: translateY(1px)}
+
+/* Messages */
+.msg-card{
+  background:#fff;
+  border: 1px solid rgba(226,232,240,.85);
+  border-radius: 16px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+}
+.msg-title{font-weight: 900}
+.msg-text{margin-top: 6px; color:#334155; font-weight: 700; font-size: 13px; line-height: 1.5}
+.msg-meta{margin-top: 8px; color:#64748b; font-size: 12px; font-weight: 800}
+
+/* Desktop tweaks */
+@media (min-width: 360px){
+  .header-pill{display:inline-flex}
+}
+
+/* 유진이이이이이 
+	공고올리기 디자
+/* =========================
+   공고올리기 UI (사이트 톤 맞춤)
+   - pill + soft shadow + navy focus
+   ========================= */
+
+/* 공통 텍스트/간격 */
+.input-group label{
+  font-weight: 900;
+  margin-bottom: 8px;
+  display:block;
+  font-size: 13px;
+  letter-spacing: -0.2px;
+}
+
+.row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+.helper{
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+.helper-inline{ color: var(--muted); font-size:12px; font-weight:700; }
+
+.suffix{ padding:0 6px; color: var(--muted); font-weight: 800; }
+.dash{ color: #94a3b8; font-weight: 900; }
+
+/* 입력/셀렉트 톤 통일 */
+input[type="number"], input[type="time"], select, textarea{
+  width:100%;
+  padding: 12px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(226,232,240,.9);
+  background: #fff;
+  outline:none;
+  font-size: 14px;
+  font-weight: 800;
+  box-shadow: 0 2px 10px rgba(15,23,42,.04);
+}
+input:focus, select:focus, textarea:focus{
+  border-color: rgba(31,58,138,.55);
+  box-shadow: 0 0 0 4px rgba(31,58,138,.12), 0 2px 10px rgba(15,23,42,.06);
+}
+
+select.step{ max-width: 96px; }
+
+/* ===== Segmented (주중/주말/협의 같은 상단 토글) ===== */
+.segmented{
+  display:flex;
+  gap:8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.seg-btn{
+  border: 1px solid rgba(226,232,240,.9);
+  background: #ffffff;
+  color: #334155;
+  padding: 10px 12px;
+  border-radius: 999px;
+  font-weight: 900;
+  font-size: 13px;
+  cursor:pointer;
+  user-select:none;
+  box-shadow: 0 2px 10px rgba(15,23,42,.04);
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
+}
+
+.seg-btn:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15,23,42,.08);
+}
+
+.seg-btn:active{ transform: translateY(0px); }
+
+.seg-btn.active{
+  color: #fff;
+  border-color: rgba(31,58,138,.9);
+  background: linear-gradient(180deg, var(--primary2), var(--primary));
+  box-shadow: 0 10px 18px rgba(31,58,138,.22);
+}
+
+/* 협의 버튼은 느낌 다르게(노랑 포인트) */
+.seg-btn[data-mode="negotiable"],
+.seg-btn[data-quick="negotiable"]{
+  border-color: rgba(251,191,36,.55);
+  background: rgba(251,191,36,.18);
+  color: #92400e;
+}
+.seg-btn[data-mode="negotiable"].active,
+.seg-btn[data-quick="negotiable"].active{
+  background: linear-gradient(180deg, #fbbf24, #f59e0b);
+  border-color: rgba(245,158,11,.9);
+  color: #111827;
+  box-shadow: 0 10px 18px rgba(245,158,11,.22);
+}
+
+/* ===== 요일 버튼 (동그라미) ===== */
+.day-grid{
+  display:grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+/* 동그라미 + 카드톤 */
+.day{
+  height: 44px;
+  border-radius: 999px;               /* 완전 동그라미 느낌 */
+  border: 1px solid rgba(226,232,240,.9);
+  background: #fff;
+  color: #334155;
+  font-weight: 900;
+  font-size: 13px;
+  cursor:pointer;
+  box-shadow: 0 2px 10px rgba(15,23,42,.04);
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
+}
+.day:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15,23,42,.08);
+}
+.day:active{ transform: translateY(0px); }
+
+/* 선택됨 = 네이비 그라데이션 */
+.day.active{
+  color: #fff;
+  border-color: rgba(31,58,138,.9);
+  background: linear-gradient(180deg, var(--primary2), var(--primary));
+  box-shadow: 0 10px 18px rgba(31,58,138,.22);
+}
+
+/* 협의 상태일 때 비활성 느낌 */
+.day.ghost{
+  opacity: .45;
+  box-shadow: none;
+  transform: none;
+}
+
+/* 작은 화면에서 줄바꿈될 때도 예쁘게 */
+@media (max-width: 360px){
+  .day{ height: 42px; font-size: 12px; }
+  .seg-btn{ font-size: 12px; padding: 9px 11px; }
+}
+
+/* =========================
+   이력서 UI (기존 톤 유지)
+   ========================= */
+#screen-resume .block-title{
+  margin: 18px 0 8px;
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: -0.2px;
+  color: #0f172a;
+}
+
+#screen-resume .row{
+  display:flex;
+  gap:10px;
+  align-items:center;
+}
+
+/* 작은 버튼(경력 추가 / 삭제) - 기존 pill 톤 */
+#screen-resume .btn.small{
+  width:auto;
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  margin-top: 0;
+  background: #111827;
+  color:#fff;
+}
+#screen-resume .btn.small:active{ transform: translateY(1px); }
+
+#screen-resume .btn.danger.small{
+  background: var(--danger);
+  color:#fff;
+}
+
+/* inline 체크박스 라인 */
+#screen-resume .inline{
+  display:inline-flex;
+  align-items:center;
+  gap: 6px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(226,232,240,.9);
+  background: #f8fafc;
+  font-weight: 900;
+  font-size: 12px;
+  color: #334155;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(15,23,42,.04);
+}
+
+/* time ~ 표시 */
+#screen-resume .tilde{
+  color: #94a3b8;
+  font-weight: 900;
+  padding: 0 2px;
+}
+
+/* days / skills grid (pill 느낌) */
+#screen-resume .days-grid,
+#screen-resume .skills-grid{
+  display:grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 6px;
+}
+
+/* 체크박스 label을 pill로 */
+#screen-resume .days-grid label,
+#screen-resume .skills-grid label{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: 1px solid rgba(226,232,240,.9);
+  box-shadow: 0 2px 10px rgba(15,23,42,.04);
+  font-weight: 900;
+  font-size: 13px;
+  color: #334155;
+  cursor: pointer;
+  user-select:none;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+}
+#screen-resume .days-grid label:hover,
+#screen-resume .skills-grid label:hover{
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(15,23,42,.08);
+}
+#screen-resume .days-grid label:active,
+#screen-resume .skills-grid label:active{
+  transform: translateY(0px);
+}
+
+/* 체크박스 자체 크기/톤 */
+#screen-resume input[type="checkbox"]{
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
+/* 경력 카드 */
+#screen-resume .exp-item{
+  margin-top: 10px;
+  padding: 12px 12px;
+  border-radius: 16px;
+  background: #ffffff;
+  border: 1px solid rgba(226,232,240,.85);
+  box-shadow: 0 2px 12px rgba(15,23,42,.04);
+}
+
+#screen-resume .exp-item .flex1{ flex: 1; }
+
+/* 삭제 버튼은 오른쪽에 딱 붙게 */
+#screen-resume .exp-item .btn-remove-exp{
+  width:auto;
+  margin-top: 8px;
+}
+
+/* 얇은 구분선 */
+#screen-resume hr.thin{
+  border: 0;
+  border-top: 1px solid rgba(226,232,240,.9);
+  margin: 14px 0 0;
+}
+
+/* 모바일 좁을 때 2줄로 보기 좋게 */
+@media (max-width: 360px){
+  #screen-resume .days-grid,
+  #screen-resume .skills-grid{
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  #screen-resume .inline{
+    padding: 9px 10px;
+    font-size: 12px;
+  }
+}
+
+/* =========================
+   지원서 작성 화면 (apply)
+   ========================= */
+
+#screen-apply .block-title {
+  margin: 18px 0 8px;
+  font-weight: 900;
+  font-size: 15px;
+  letter-spacing: -0.2px;
+  color: #0f172a;
+}
+
+#screen-apply .card {
+  background: #fff;
+  border: 1px solid rgba(226,232,240,.85);
+  border-radius: 16px;
+  padding: 14px 14px;
+  box-shadow: 0 2px 12px rgba(15,23,42,.04);
+  margin-bottom: 12px;
+}
+
+#screen-apply .mini {
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 12px;
+  font-size: 13px;
+  color: #334155;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+#screen-apply .row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+#screen-apply .btn.small {
+  width: auto;
+  padding: 8px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 900;
+  margin-top: 0;
+  background: #111827;
+  color: #fff;
+}
+
+#screen-apply .btn.small:active {
+  transform: translateY(1px);
+}
+
+#screen-apply .btn.primary.flex1 {
+  background: var(--primary);
+  color: #fff;
+  flex: 1;
+}
+
+#screen-apply .btn.outline.flex1 {
+  border: 1px solid rgba(148,163,184,.7);
+  background: transparent;
+  color: #0f172a;
+  flex: 1;
+}
+
+#screen-apply .muted {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 버튼과 카드 간 여백 */
+#screen-apply button.btn {
+  margin-top: 10px;
+}
+
+/* 입력 폼 숨길 때 부드럽게 */
+#apply-simple-form {
+  transition: all .2s ease;
+}
+
+/* 지원자 카드 내부 레이아웃 */
+.applicant-card-inner {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* 왼쪽 텍스트 영역 */
+.applicant-info {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 오른쪽 버튼 세로 정렬 */
+.applicant-actions-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;         /* 버튼 사이 간격만 유지 */
+  flex: 0 0 74px;
+  margin: 0;        /* 외부 여백 제거 */
+}
+
+/* 버튼 기본 스타일 */
+.applicant-actions-vertical .btn {
+  width: 100%;
+  padding: 8px 0;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  box-shadow: none;
+  margin: 0px;
+}
+
+/* 색상 톤 일치 */
+.applicant-actions-vertical .btn.reject {
+  background: var(--danger);
+  color: #fff;
+}
+.applicant-actions-vertical .btn.reject:hover {
+  background: #dc2626;
+}
+
+.applicant-actions-vertical .btn.accept {
+  background: var(--ok);
+  color: #fff;
+}
+.applicant-actions-vertical .btn.accept:hover {
+  background: #059669;
+}
+
+.applicant-actions-vertical .btn.message {
+  background: var(--primary);
+  color: #fff;
+}
+.applicant-actions-vertical .btn.message:hover {
+  background: var(--primary2);
+}
+/*채용,거부버튼 */
+/* 상태별 카드 강조 */
+.msg-card.accepted {
+  border: 2px solid var(--ok); /* 초록색 */
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+.msg-card.rejected {
+  border: 2px solid #d1d5db; /* 회색 */
+  opacity: 0.7;
+  transition: opacity 0.2s ease, border 0.2s ease;
+}
+
+.msg-card.accepted:hover {
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+
+/*후기*/
+.review-section {
+  background: #f9f9f9;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.review-card {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.review-card small {
+  display: block;
+  color: #666;
+  margin-top: 4px;
+}
+
+
+/*후기남기기 버*/
+.review-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px;
+  border-radius: 10px;
+  font-weight: 900;
+  background: #fff;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  transition: 0.2s;
+}
+
+.review-btn:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+
+/* =========================
+   채용됨 라벨 (지원자 카드 버튼 영역)
+   - reject/accept 대신 텍스트만 보이게
+   - 기존 톤(네이비/필/soft shadow) 유지
+   ========================= */
+.hire-label{
+  width: 100%;
+  padding: 8px 0;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+
+  /* badge 느낌 + site tone */
+  background: #ecfdf5;                 /* ok 계열 연한 배경 */
+  border: 1px solid rgba(16,185,129,.35);
+  color: #065f46;                      /* 진한 그린 텍스트 */
+
+  box-shadow: 0 2px 10px rgba(15,23,42,.04);
+  
+  margin-top: 25px;
+}
+
+/* accepted 카드일 때 라벨이 더 자연스럽게 */
+.msg-card.accepted .hire-label{
+  background: rgba(16,185,129,.12);
+  border-color: rgba(16,185,129,.45);
+}
+
+#owner-job-list .btn-view-applicants{
+  width: 124px;
+  white-space: nowrap;
+}
+
