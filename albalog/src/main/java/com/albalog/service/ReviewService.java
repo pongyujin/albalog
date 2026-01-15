@@ -1,5 +1,6 @@
 package com.albalog.service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import org.springframework.stereotype.Service;
@@ -51,10 +52,16 @@ public class ReviewService {
         }
 
         // 5) 별점 검증 (0.0~5.0, 0.5 단위)
-        Double rating = req.getRating();
-        if (rating == null || rating < 0.0 || rating > 5.0 || (rating * 2) % 1 != 0) {
+        BigDecimal rating = req.getRating();
+        if (
+            rating == null
+            || rating.compareTo(BigDecimal.ZERO) < 0
+            || rating.compareTo(new BigDecimal("5.0")) > 0
+            || rating.multiply(new BigDecimal("2")).remainder(BigDecimal.ONE).compareTo(BigDecimal.ZERO) != 0
+        ) {
             throw new IllegalArgumentException("별점은 0.0~5.0 사이, 0.5 단위만 가능합니다.");
         }
+
 
         // 6) 저장
         Review r = new Review();

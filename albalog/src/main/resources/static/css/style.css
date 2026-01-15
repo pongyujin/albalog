@@ -1019,3 +1019,48 @@ select.step{ max-width: 96px; }
   white-space: nowrap;
 }
 
+/* =========================
+   ⭐ 별점 입력 UI (0.5 단위)
+   ========================= */
+
+.star-rating {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  font-size: 28px;
+}
+
+.star-rating input {
+  display: none;
+}
+
+.star-rating label {
+  cursor: pointer;
+  color: #e5e7eb; /* 기본 회색 */
+  position: relative;
+}
+
+.star-rating label::before {
+  content: "★";
+}
+
+/* 반쪽 별 */
+.star-rating label.half::before {
+  content: "★";
+  position: absolute;
+  width: 50%;
+  overflow: hidden;
+  color: #fbbf24;
+}
+
+/* hover */
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+  color: #fbbf24;
+}
+
+/* 선택된 값 */
+.star-rating input:checked ~ label {
+  color: #fbbf24;
+}
+
+

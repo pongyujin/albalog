@@ -1,8 +1,15 @@
 package com.albalog.domain;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -42,8 +49,8 @@ public class Review {
     // =====================================================
     // ⭐ 별점 (0.5 단위, 최대 5.0)
     // =====================================================
-    @Column(name = "rating", nullable = false, precision = 2, scale = 1)
-    private Double rating;
+    @Column(name = "rating", precision = 2, scale = 1, nullable = false)
+    private BigDecimal rating;
 
     // =====================================================
     // 📝 코멘트

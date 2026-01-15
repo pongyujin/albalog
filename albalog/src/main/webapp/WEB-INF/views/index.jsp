@@ -694,6 +694,61 @@
   
 	<!-- 모달 컨테이너 -->
 <div id="modal-container" class="modal-container"></div>
+
+	<!-- ✅ 12. 후기 작성 화면 (NEW) -->
+	<section id="screen-review-write" class="screen">
+	  <div class="screen-title">후기 작성</div>
+	  <div class="screen-sub" id="review-write-sub">채용된 알바생에게 후기를 남겨주세요.</div>
+	
+	  <div class="card">
+		<div class="input-group">
+		  <label>별점</label>
+		
+		  <div class="star-rating" id="review-rating">
+		    <!-- 5 → 0.5 역순 (CSS 처리 편하게) -->
+		    <input type="radio" id="star5" name="rating" value="5.0" />
+		    <label for="star5" title="5점"></label>
+		
+		    <input type="radio" id="star4half" name="rating" value="4.5" />
+		    <label for="star4half" class="half" title="4.5점"></label>
+		
+		    <input type="radio" id="star4" name="rating" value="4.0" />
+		    <label for="star4" title="4점"></label>
+		
+		    <input type="radio" id="star3half" name="rating" value="3.5" />
+		    <label for="star3half" class="half" title="3.5점"></label>
+		
+		    <input type="radio" id="star3" name="rating" value="3.0" />
+		    <label for="star3" title="3점"></label>
+		
+		    <input type="radio" id="star2half" name="rating" value="2.5" />
+		    <label for="star2half" class="half" title="2.5점"></label>
+		
+		    <input type="radio" id="star2" name="rating" value="2.0" />
+		    <label for="star2" title="2점"></label>
+		
+		    <input type="radio" id="star1half" name="rating" value="1.5" />
+		    <label for="star1half" class="half" title="1.5점"></label>
+		
+		    <input type="radio" id="star1" name="rating" value="1.0" />
+		    <label for="star1" title="1점"></label>
+		
+		    <input type="radio" id="star0half" name="rating" value="0.5" />
+		    <label for="star0half" class="half" title="0.5점"></label>
+		  </div>
+		</div>
+	
+	
+	    <div class="input-group">
+	      <label>코멘트</label>
+	      <textarea id="review-comment" placeholder="예) 성실하고 시간 약속을 잘 지켜요."></textarea>
+	    </div>
+	
+	    <button class="btn primary" id="btn-submit-review">후기 등록</button>
+	    <button class="btn outline" id="btn-cancel-review">← 지원자 목록으로</button>
+	  </div>
+	</section>
+
 	
   <!-- ✅ JS도 contextPath 붙여서 로딩 -->
   <script src="/js/app.js"></script>

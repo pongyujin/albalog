@@ -10,9 +10,6 @@
 
 console.log("✅ main.js loaded");
 
-
-
-
 // ======================================================
 // 0) DOM Helpers
 // ======================================================
@@ -64,6 +61,9 @@ const state = {
   jobs: []
 };
 
+state.reviewTargetAppId = null;
+
+
 // ======================================================
 // 4) Screens DOM refs
 // ======================================================
@@ -80,7 +80,9 @@ const screens = {
   myjobs: $("#screen-myjobs"),
   reviews: $("#screen-reviews"),
   owner: $("#screen-owner"),
-  applicants: $("#screen-applicants")
+  applicants: $("#screen-applicants"),
+  // ✅ 추가
+  reviewWrite: $("#screen-review-write")
 };
 
 const slider = $(".slider-banner");
@@ -767,91 +769,29 @@ function buildApplicantCard(a) {
   `;
 }
 
+// ✍ 리뷰 작성 화면 들어갈때 초기화 함수 
+function initReviewWriteScreen() {
+  // ✅ 기본 별점 5점
+  const star5 = document.querySelector("#star5");
+  if (star5) star5.checked = true;
 
-$("#applicants-list").addEventListener("click", (e) => {
-  const card = e.target.closest(".msg-card");
-  if (!card) return;
-  const appId = card.dataset.id;
+  // ✅ 코멘트 초기화
+  const comment = $("#review-comment");
+  if (comment) comment.value = "";
 
-  // 후기 남기기 클릭
-  if (e.target.classList.contains("review-btn")) {
-    goto("reviews"); // ✅ 리뷰 작성 페이지로 이동 (임시)
-    return;
-  }
-});
-
-
-
-// 지원자 이력서 열기 
-// 지원자 이력서 열기
-$("#applicants-list").addEventListener("click", async (e) => {
-	
-	state.resumeMode = "ME";   // ✅ 지원자 모드로 전환
-  // 버튼 클릭이면 return (거절/채용/메시지 클릭 방지)
-  if (e.target.closest(".applicant-actions-vertical")) return;
-
-  const card = e.target.closest(".msg-card");
-  if (!card) return;
-
-  const appId = card.dataset.id;
-  const res = await fetch(`/api/applications/${appId}/resume`);
-  if (!res.ok) {
-    alert("이력서가 등록되지 않은 지원자입니다.");
-    return;
-  }
-
-  const resume = await res.json();
-  openResumeViewMode(resume);
-});
-
-// 후기 불러오기
-async function loadReviews(resumeId) {
-  const res = await fetch(`/api/reviews/by-resume/${resumeId}`);
-  const listEl = $("#review-list");
-  listEl.innerHTML = "";
-
-  if (!res.ok) {
-    listEl.innerHTML = "<p class='empty'>후기를 불러오지 못했습니다.</p>";
-    return;
-  }
-
-  const reviews = await res.json();
-  if (reviews.length === 0) {
-    listEl.innerHTML = "<p class='empty'>아직 후기가 없습니다.</p>";
-    return;
-  }
-
-  // 최대 3개까지만 미리 표시
-  reviews.slice(0, 3).forEach(r => {
-    const div = document.createElement("div");
-    div.className = "review-card";
-    div.innerHTML = `
-      <div>“${r.content}”</div>
-      <small>🕒 ${new Date(r.createdAt).toLocaleDateString()} · ${r.ownerName}</small>
-    `;
-    listEl.appendChild(div);
-  });
-
-  // 3개 초과 시 "더보기" 버튼 생성
-  if (reviews.length > 3) {
-    const moreBtn = document.createElement("button");
-    moreBtn.className = "btn small outline";
-    moreBtn.textContent = "후기 더보기";
-    moreBtn.onclick = () => {
-      listEl.innerHTML = "";
-      reviews.forEach(r => {
-        const div = document.createElement("div");
-        div.className = "review-card";
-        div.innerHTML = `
-          <div>“${r.content}”</div>
-          <small>🕒 ${new Date(r.createdAt).toLocaleDateString()} · ${r.ownerName}</small>
-        `;
-        listEl.appendChild(div);
-      });
-    };
-    listEl.appendChild(moreBtn);
+  // ✅ 안내 문구(선택)
+  const sub = $("#review-write-sub");
+  if (sub && state.reviewTargetAppId) {
+    sub.textContent = `지원 ID #${state.reviewTargetAppId} 에 대한 후기를 남겨주세요.`;
   }
 }
+
+// ✍ 취소버튼 - > 지원자 목록으로 돌아가
+$("#btn-cancel-review")?.addEventListener("click", () => {
+  state.reviewTargetAppId = null;
+  goto("applicants");
+});
+
 
 // 이력서 화면을 사장님 쪽에서 열었을떄 
 function openResumeViewMode(resume) {
@@ -870,6 +810,100 @@ $("#btn-back-applicants")?.addEventListener("click", () => {
   goto("applicants");
 });
 
+// =============================================
+// ✅ applicants-list 클릭 이벤트는 "하나"로 통합
+// - 후기 버튼 / 거절 / 채용 / 메시지 / 카드 클릭(이력서 열기)
+// =============================================
+$("#applicants-list").addEventListener("click", async (e) => {
+  const card = e.target.closest(".msg-card");
+  if (!card) return;
+
+  const appId = card.dataset.id;
+
+  // =====================================================
+  // 1) ✅ 후기 남기기 버튼 (가장 먼저 처리해야 튐 방지)
+  // =====================================================
+  if (e.target.classList.contains("review-btn")) {
+    e.preventDefault();
+    e.stopPropagation(); // ✅ 혹시 모를 전파 차단 (안전장치)
+
+    state.selectedApplicationIdForReview = appId; // ✅ 후기 작성 시 필요하면 사용
+    goto("reviewWrite");
+    return;
+  }
+
+  // =====================================================
+  // 2) ✅ 액션 버튼 영역(거절/채용/메시지)
+  //    - 이 영역 클릭이면 "이력서 열기" 로직 타면 안 됨
+  // =====================================================
+  if (e.target.closest(".applicant-actions-vertical")) {
+
+    // 거절
+    if (e.target.classList.contains("reject")) {
+      if (confirm("이 지원자를 거절하시겠습니까?")) {
+        await updateApplicantStatus(appId, "REJECTED");
+        card.remove(); // 화면에서도 제거
+      }
+      return;
+    }
+
+    // 채용
+    if (e.target.classList.contains("accept")) {
+      if (confirm("이 지원자를 채용하시겠습니까?")) {
+        await updateApplicantStatus(appId, "ACCEPTED");
+
+        // ✅ UI 즉시 반영
+        card.classList.add("accepted");
+        card.classList.remove("rejected");
+
+        // ✅ 버튼 영역을 "채용됨 + 메시지"로 교체 (선택)
+        const actions = card.querySelector(".applicant-actions-vertical");
+        if (actions) {
+          actions.innerHTML = `
+            <div class="hire-label">✅ 채용됨</div>
+            <button class="btn message">메시지</button>
+          `;
+        }
+
+        // ✅ 후기 버튼 없으면 추가 (선택)
+        if (!card.querySelector(".review-btn")) {
+          card.insertAdjacentHTML(
+            "beforeend",
+            `<button class="btn outline review-btn">📝 후기 남기기</button>`
+          );
+        }
+      }
+      return;
+    }
+
+    // 메시지
+    if (e.target.classList.contains("message")) {
+      alert("메시지 기능은 준비 중입니다.");
+      return;
+    }
+
+    return; // 액션 영역이면 여기서 종료
+  }
+
+  // =====================================================
+  // 3) ✅ 카드 클릭 = 이력서 열기
+  // =====================================================
+  try {
+    state.resumeMode = "ME"; // (너 코드 유지) - 사실 여기서는 APPLICANT로 바꾸는게 맞지만, 기존 흐름 유지
+    const res = await fetch(`/api/applications/${appId}/resume`, { credentials: "include" });
+
+    if (!res.ok) {
+      alert("이력서가 등록되지 않은 지원자입니다.");
+      return;
+    }
+
+    const resume = await res.json();
+    openResumeViewMode(resume);
+  } catch (err) {
+    console.error(err);
+    alert("이력서를 불러오는 중 오류가 발생했습니다.");
+  }
+});
 
 
 // 날짜 포맷 함수 (선택 사항)
@@ -911,36 +945,6 @@ async function openApplicantsScreen(jobId) {
   }
 }
 
-
-// 지원자 카드에 이벤트 위임 (거절 / 채용 버튼 클릭)
-$("#applicants-list").addEventListener("click", async (e) => {
-  const card = e.target.closest(".msg-card");
-  if (!card) return;
-  const appId = card.dataset.id;
-
-  // 거절
-  if (e.target.classList.contains("reject")) {
-    if (confirm("이 지원자를 거절하시겠습니까?")) {
-      await updateApplicantStatus(appId, "REJECTED");
-      card.remove(); // 화면에서도 제거
-    }
-  }
-
-  // 채용
-  else if (e.target.classList.contains("accept")) {
-    if (confirm("이 지원자를 채용하시겠습니까?")) {
-      await updateApplicantStatus(appId, "ACCEPTED");
-      card.classList.add("accepted"); // ✅ 초록 테두리 바로 적용
-      card.classList.remove("rejected");
-    }
-  }
-
-
-  // 메시지
-  else if (e.target.classList.contains("message")) {
-    alert("메시지 기능은 준비 중입니다.");
-  }
-});
 
 // 상태 변경 요청 함수
 async function updateApplicantStatus(appId, status) {
@@ -1186,6 +1190,8 @@ async function goto(screenKey){
   if (screenKey === "myjobs") renderMyJobs();
   if (screenKey === "messages") renderMessages();
   if (screenKey === "reviews") renderReviews();
+  if (screenKey === "reviewWrite") initReviewWriteScreen();
+
 
   // ❌ resume는 위에서 DB로 불러오니까 loadResume() 같은 옛날 함수는 호출하지 마
   if (screenKey === "detail") await renderDetail();
@@ -1974,6 +1980,7 @@ document.addEventListener("DOMContentLoaded", async function () {
   // 4) 초기 화면
   goto("home"); // 너 goto가 있으면
 });
+
 
 
 

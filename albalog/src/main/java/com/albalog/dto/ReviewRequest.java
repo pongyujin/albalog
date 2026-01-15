@@ -1,5 +1,7 @@
 package com.albalog.dto;
 
+import java.math.BigDecimal;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,7 +12,7 @@ public class ReviewRequest {
     private Long applicationId;
 
     // ✅ 별점: 0.5 단위 (0.0~5.0)
-    private Double rating;
+    private BigDecimal rating;
 
     // ✅ 코멘트
     private String comment;

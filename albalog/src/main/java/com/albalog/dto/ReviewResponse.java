@@ -1,5 +1,6 @@
 package com.albalog.dto;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import com.albalog.domain.Review;
@@ -15,7 +16,7 @@ public class ReviewResponse {
     private Long ownerId;
     private Long workerId;
 
-    private Double rating;
+    private BigDecimal rating;
     private String comment;
 
     private LocalDateTime createdAt;
