@@ -1064,3 +1064,50 @@ select.step{ max-width: 96px; }
 }
 
 
+/* ✅ myjobs에서만: job-top을 세로(column)로 강제 */
+.myjob-top {
+  display: flex;
+  flex-direction: column;  /* 🔥 제목줄 아래로 회사명 내려가게 */
+  gap: 6px;
+}
+
+/* ✅ 제목 + pay는 같은 줄 */
+.myjob-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+/* ✅ 회사명은 무조건 새 줄 + 좌측 정렬 */
+.myjob-company {
+  display: block;          /* 🔥 inline/flex 영향 차단 */
+  width: 100%;
+  text-align: left;
+}
+
+/* ✅ 제목 말줄임 */
+.myjob-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ✅ pay 뱃지는 오른쪽 고정 */
+.myjob-pay {
+  flex-shrink: 0;
+  white-space: nowrap;
+  margin-left: auto;       /* 🔥 혹시 space-between이 깨져도 오른쪽으로 밀어줌 */
+}
+.myjob-company {
+  margin-top: 0;
+}
+.myjob-meta {
+  margin-bottom: 10px;
+}
+
+
+

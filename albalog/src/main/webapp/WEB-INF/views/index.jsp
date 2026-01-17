@@ -751,7 +751,8 @@
 
 	
   <!-- ✅ JS도 contextPath 붙여서 로딩 -->
-  <script src="/js/app.js"></script>
+  <script type="module" src="/js/app.js"></script>
+
 
 </body>
 </html>
