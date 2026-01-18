@@ -1,9 +1,5 @@
 // /js/app.js
 // 믿GO알바 - Demo App (Vanilla JS) SPA 엔트리
-// - screens/* 모듈 연결
-// - goto(screenKey)로 화면 전환 + 화면별 렌더 호출
-// - 헤더 인증 UI 동기화 + 역할별 네비 적용
-// - post UI/submit 바인딩
 
 import { $, $$ } from "./core/dom.js";
 import { store, setUser, clearUser } from "./core/store.js";
@@ -22,9 +18,8 @@ import { initReviewWriteScreen, renderReviewWriteScreen } from "./screens/review
 import { initResumeScreen, onEnterResumeScreen } from "./screens/resume.screen.js";
 import { renderMyJobsScreen } from "./screens/myjobs.screen.js";
 
-
 // Post
-import { initPostUI /*, resetPostForm*/ } from "./post/post.ui.js";
+import { initPostUI } from "./post/post.ui.js";
 import { initPostSubmit } from "./post/post.submit.js";
 
 // ======================================================
@@ -48,8 +43,7 @@ const screens = {
 };
 
 // ======================================================
-// 2) Role UI (하단 네비 표시/숨김)
-// - 네 기존 로직 유지: 로그인 안돼도 메뉴 보이게(요청사항 반영)
+// 2) Role UI
 // ======================================================
 function applyRoleUI(isOwner) {
   const navMyjobs = $("#nav-myjobs");
@@ -57,44 +51,38 @@ function applyRoleUI(isOwner) {
   const navOwner = $("#nav-owner");
   const navMessage = $("#nav-messages");
 
-  // isOwner가 문자열로 들어오는 경우 방어
   let status = isOwner;
   if (isOwner === "false") status = false;
   if (isOwner === "true") status = true;
 
-  // ✅ 로그인 여부 판단: true/false면 로그인, 그 외(null/undefined)이면 비로그인
   const isLoggedIn = status === true || status === false;
 
-  // ✅ 비로그인: “모든 메뉴 표시” (너가 원하던 정책)
   if (!isLoggedIn) {
-    if (navMyjobs) navMyjobs.style.display = "flex";
-    if (navResume) navResume.style.display = "flex";
-    if (navOwner) navOwner.style.display = "flex";
-    if (navMessage) navMessage.style.display = "flex";
+    navMyjobs && (navMyjobs.style.display = "flex");
+    navResume && (navResume.style.display = "flex");
+    navOwner && (navOwner.style.display = "flex");
+    navMessage && (navMessage.style.display = "flex");
     return;
   }
 
-  // ✅ 알바생
   if (status === false) {
-    if (navMyjobs) navMyjobs.style.display = "flex";
-    if (navResume) navResume.style.display = "flex";
-    if (navMessage) navMessage.style.display = "flex";
-    if (navOwner) navOwner.style.display = "none";
+    navMyjobs && (navMyjobs.style.display = "flex");
+    navResume && (navResume.style.display = "flex");
+    navMessage && (navMessage.style.display = "flex");
+    navOwner && (navOwner.style.display = "none");
     return;
   }
 
-  // ✅ 사장님
   if (status === true) {
-    if (navMyjobs) navMyjobs.style.display = "none";
-    if (navResume) navResume.style.display = "none";
-    if (navMessage) navMessage.style.display = "flex";
-    if (navOwner) navOwner.style.display = "flex";
+    navMyjobs && (navMyjobs.style.display = "none");
+    navResume && (navResume.style.display = "none");
+    navMessage && (navMessage.style.display = "flex");
+    navOwner && (navOwner.style.display = "flex");
   }
 }
 
 // ======================================================
-// 3) Header Auth UI 동기화
-// - /api/users/me로 세션 체크
+// 3) Header Auth UI
 // ======================================================
 async function syncHeaderAuthUI() {
   const btn = $("#btn-header-login");
@@ -103,21 +91,18 @@ async function syncHeaderAuthUI() {
   try {
     const r = await getMe();
 
-    // ✅ 로그인 상태
     if (r.ok) {
-      const me = r.data; // { id, name, isOwner, ... }
+      const me = r.data;
       btn.textContent = `${me.name}님`;
       btn.onclick = () => goto("profile");
       applyRoleUI(me.isOwner);
       return;
     }
 
-    // ✅ 비로그인
     btn.textContent = "로그인";
     btn.onclick = () => goto("login");
     applyRoleUI(null);
-  } catch (e) {
-    // 네트워크 에러도 비로그인 취급
+  } catch {
     btn.textContent = "로그인";
     btn.onclick = () => goto("login");
     applyRoleUI(null);
@@ -128,110 +113,102 @@ async function syncHeaderAuthUI() {
 // 4) SPA Navigation
 // ======================================================
 export async function goto(screenKey) {
-  console.log("📱 화면 전환:", screenKey);
-
-  // 1) 화면 active 토글
   Object.entries(screens).forEach(([k, el]) => {
-    if (!el) return;
-    el.classList.toggle("active", k === screenKey);
+    el && el.classList.toggle("active", k === screenKey);
   });
 
-  // 2) 하단 네비 active 토글
   $$(".nav-item").forEach((item) => {
     item.classList.toggle("active", item.dataset.target === screenKey);
   });
 
-  // 로그인/회원가입/상세/지원/공고작성 등에서는 네비 active 해제
   if (["login", "signup", "detail", "apply", "post"].includes(screenKey)) {
     $$(".nav-item").forEach((item) => item.classList.remove("active"));
   }
 
-  // 3) 화면별 진입 처리
-  if (screenKey === "home") {
-    await renderHomeScreen();
-  }
+  if (screenKey === "home") await renderHomeScreen();
+  if (screenKey === "detail") await renderDetailScreen();
+  if (screenKey === "apply") await renderApplyScreen();
+  if (screenKey === "owner") await renderOwnerScreen({ openApplicantsScreen });
+  if (screenKey === "reviewWrite") renderReviewWriteScreen();
+  if (screenKey === "resume") await onEnterResumeScreen();
+  if (screenKey === "myjobs") await renderMyJobsScreen();
 
-  if (screenKey === "detail") {
-    await renderDetailScreen();
-  }
-
-  if (screenKey === "apply") {
-    await renderApplyScreen();
-  }
-
-  if (screenKey === "owner") {
-    // owner 화면에서 “지원자 보기” 눌렀을 때 openApplicantsScreen으로 이동
-    await renderOwnerScreen({ openApplicantsScreen });
-  }
-
-  if (screenKey === "applicants") {
-    // applicants는 openApplicantsScreen(jobId)로 들어오는 게 기본이라
-    // 여기서는 별도 렌더 없음(필요하면 빈 화면 처리 가능)
-  }
-
-  if (screenKey === "reviewWrite") {
-    renderReviewWriteScreen();
-  }
-
-  if (screenKey === "resume") {
-    // ✅ DOM 붙은 다음 실행 + 모드 분기(내 이력서/지원자 열람)
-    await onEnterResumeScreen();
-  }
-  
-  if (screenKey === "myjobs") {
-    await renderMyJobsScreen();
-  }
-
-
-  // 4) 상단 스크롤
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // ======================================================
-// 5) Auth (login / signup / logout)
+// 5) Auth Handlers (alert → Swal)
 // ======================================================
 function bindAuthHandlers() {
   // 로그아웃
   $("#btn-logout")?.addEventListener("click", async () => {
     try {
       await logout();
-    } catch (e) {
-      console.error(e);
-      // 실패해도 UI는 비로그인처럼 전환
-    }
+    } catch {}
+
     clearUser();
-    alert("로그아웃!");
+
+    await Swal.fire({
+      icon: "success",
+      title: "로그아웃",
+      text: "정상적으로 로그아웃되었습니다.",
+      confirmButtonText: "확인"
+    });
+
     await syncHeaderAuthUI();
     goto("home");
   });
 
   // 로그인
   $("#btn-login")?.addEventListener("click", async () => {
-    const data = {
-      username: $("#login-id")?.value.trim(),
-      password: $("#login-pw")?.value.trim()
-    };
+    const username = $("#login-id")?.value.trim();
+    const password = $("#login-pw")?.value.trim();
 
-    if (!data.username || !data.password) {
-      alert("아이디와 비밀번호를 입력하세요.");
+    if (!username || !password) {
+      await Swal.fire({
+        icon: "warning",
+        title: "입력 확인",
+        text: "아이디와 비밀번호를 입력하세요.",
+        confirmButtonText: "확인"
+      });
       return;
     }
 
     try {
-      const me = await login(data); // { name, isOwner, ... } (서버 응답 기준)
-      // (데모 저장소) 기존 로직 유지
-      setUser({ id: data.username, nick: me?.name || "" });
+      Swal.fire({
+        title: "로그인 중...",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
 
-      alert("로그인 성공!");
+      const me = await login({ username, password });
+      setUser({ id: username, nick: me?.name || "" });
+
+      Swal.close();
+
+      await Swal.fire({
+        icon: "success",
+        title: "로그인 성공",
+        text: "환영합니다!",
+        confirmButtonText: "확인"
+      });
+
       await syncHeaderAuthUI();
       goto("home");
     } catch (e) {
       console.error(e);
-      alert("아이디 또는 비밀번호가 틀렸습니다.");
+      Swal.close();
+
+      await Swal.fire({
+        icon: "error",
+        title: "로그인 실패",
+        text: "아이디 또는 비밀번호가 올바르지 않습니다.",
+        confirmButtonText: "확인"
+      });
     }
   });
 
-  // 로그인 화면 -> 회원가입 이동
+  // 로그인 → 회원가입
   $("#btn-go-signup")?.addEventListener("click", () => goto("signup"));
 
   // 회원가입
@@ -239,7 +216,12 @@ function bindAuthHandlers() {
     try {
       const phoneEl = $("#signup-phone");
       if (!phoneEl) {
-        alert("signup-phone input을 찾지 못했습니다. (id 확인)");
+        await Swal.fire({
+          icon: "error",
+          title: "오류",
+          text: "signup-phone input을 찾을 수 없습니다.",
+          confirmButtonText: "확인"
+        });
         return;
       }
 
@@ -253,21 +235,43 @@ function bindAuthHandlers() {
       };
 
       if (!payload.username || !payload.password || !payload.name || !payload.birth || !payload.phone) {
-        alert("모든 항목을 입력하세요.");
+        await Swal.fire({
+          icon: "warning",
+          title: "입력 확인",
+          text: "모든 항목을 입력하세요.",
+          confirmButtonText: "확인"
+        });
         return;
       }
 
       if (!/^\d{10,11}$/.test(payload.phone)) {
-        alert("전화번호를 올바르게 입력해줘! (숫자 10~11자리)");
+        await Swal.fire({
+          icon: "warning",
+          title: "전화번호 오류",
+          text: "전화번호는 숫자 10~11자리여야 합니다.",
+          confirmButtonText: "확인"
+        });
         return;
       }
 
       await signup(payload);
-      alert("회원가입 완료! 로그인 해주세요.");
+
+      await Swal.fire({
+        icon: "success",
+        title: "회원가입 완료",
+        text: "로그인해주세요.",
+        confirmButtonText: "확인"
+      });
+
       goto("login");
     } catch (e) {
       console.error(e);
-      alert("회원가입 실패: " + (e?.message || e));
+      await Swal.fire({
+        icon: "error",
+        title: "회원가입 실패",
+        text: e?.message || "회원가입 중 오류가 발생했습니다.",
+        confirmButtonText: "확인"
+      });
     }
   });
 }
@@ -276,12 +280,10 @@ function bindAuthHandlers() {
 // 6) Global nav bindings
 // ======================================================
 function bindGlobalNav() {
-  // data-goto 버튼들(화면 내부 버튼)
   $$("[data-goto]").forEach((btn) => {
     btn.addEventListener("click", () => goto(btn.dataset.goto));
   });
 
-  // 하단 네비
   $$(".nav-item").forEach((item) => {
     item.addEventListener("click", () => goto(item.dataset.target));
   });
@@ -291,9 +293,6 @@ function bindGlobalNav() {
 // 7) App init
 // ======================================================
 document.addEventListener("DOMContentLoaded", async () => {
-  console.log("✅ app.js loaded");
-
-  // 1) screens 초기화(이벤트 바인딩은 1회만)
   initHomeScreen({ goto });
   initDetailScreen({ goto });
   initApplyScreen({ goto });
@@ -302,17 +301,12 @@ document.addEventListener("DOMContentLoaded", async () => {
   initReviewWriteScreen({ goto });
   initResumeScreen({ goto });
 
-  // 2) post 초기화(이벤트 바인딩 1회)
   initPostUI();
   initPostSubmit({ goto });
 
-  // 3) 전역 네비/인증 바인딩
   bindGlobalNav();
   bindAuthHandlers();
 
-  // 4) 세션 기준 헤더/네비 동기화
   await syncHeaderAuthUI();
-
-  // 5) 첫 화면
   goto("home");
 });

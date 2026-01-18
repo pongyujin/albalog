@@ -2,6 +2,8 @@ package com.albalog.dto;
 
 import java.time.LocalDate;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,6 +16,8 @@ public class UserSignupDto {
     private String name;
     private LocalDate birth;
     private String phone; 
+    // ✅ 프론트 JSON 키 "isOwner" -> 서버 필드 owner로 매핑
+    @JsonProperty("isOwner")
     private boolean owner;
 
     // getter / setter

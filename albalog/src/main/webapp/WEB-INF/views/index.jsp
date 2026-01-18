@@ -137,13 +137,13 @@
 	  <input type="tel" id="signup-phone" placeholder="010-1234-5678" maxlength="13" />
 	</div>
 		
-		
-		<div class="input-group">
-		  <label>
-		    <input type="checkbox" id="signup-owner" />
-		    사장님입니다
-		  </label>
-		</div>
+	<div class="input-group">
+	  <label class="check-row" for="signup-owner">
+	    <span class="check-text">사장님입니다</span>
+	    <input type="checkbox" id="signup-owner" />
+	  </label>
+	</div>
+
         
         <button class="btn primary" id="btn-signup-complete">가입하기</button>
         <button class="btn outline" data-goto="login">← 로그인으로</button>
@@ -749,6 +749,7 @@
 	  </div>
 	</section>
 
+ <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	
   <!-- ✅ JS도 contextPath 붙여서 로딩 -->
   <script type="module" src="/js/app.js"></script>

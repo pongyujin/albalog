@@ -280,19 +280,64 @@ async function loadResumeFromDB() {
 
 async function saveResumeToDB() {
   try {
+    // =====================================================
+    // 1) 저장 전 로딩 표시
+    // =====================================================
+    Swal.fire({
+      title: "저장 중...",
+      text: "이력서를 저장하고 있습니다.",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
     const payload = buildResumePayload();
     await putMyResume(payload);
-    alert("이력서 저장 완료!");
+
+    // =====================================================
+    // 2) 로딩 닫기 + 성공 알림
+    // =====================================================
+    Swal.close();
+
+    await Swal.fire({
+      icon: "success",
+      title: "저장 완료",
+      text: "이력서가 성공적으로 저장되었습니다.",
+      confirmButtonText: "확인"
+    });
+
   } catch (e) {
+    console.error(e);
+
+    // 로딩이 떠있을 수 있으니 닫기
+    Swal.close();
+
+    // =====================================================
+    // 3) 인증 오류 (로그인 필요)
+    // =====================================================
     if (String(e?.message || e) === "UNAUTHORIZED") {
-      alert("로그인이 필요합니다.");
+      await Swal.fire({
+        icon: "warning",
+        title: "로그인이 필요합니다",
+        text: "이력서를 저장하려면 먼저 로그인해주세요.",
+        confirmButtonText: "확인"
+      });
+
       __goto?.("login");
       return;
     }
-    console.error(e);
-    alert("저장 실패");
+
+    // =====================================================
+    // 4) 기타 저장 실패
+    // =====================================================
+    await Swal.fire({
+      icon: "error",
+      title: "저장 실패",
+      text: "이력서 저장 중 오류가 발생했습니다. 다시 시도해주세요.",
+      confirmButtonText: "확인"
+    });
   }
 }
+
 
 function bindSaveButton() {
   const btn = qs("#btn-save-resume");

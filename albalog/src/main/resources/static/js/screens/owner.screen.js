@@ -32,37 +32,76 @@ export function initOwnerScreen({ goto }) {
   // 상단 “공고 등록”
   $("#btn-owner-go-post")?.addEventListener("click", () => __goto?.("post"));
 }
-
 export async function renderOwnerScreen({ openApplicantsScreen } = {}) {
   try {
+    // ✅ 로딩 표시
+    Swal.fire({
+      title: "불러오는 중...",
+      text: "내 공고 목록을 가져오고 있습니다.",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
     const jobs = await fetchMyOwnerJobs();
     state.ownerJobs = jobs;
 
+    // ✅ 로딩 닫기
+    Swal.close();
+
     const list = $("#owner-job-list");
     if (!list) return;
+
     list.innerHTML = "";
 
+    // =====================================================
+    // 공고 없음
+    // =====================================================
     if (jobs.length === 0) {
       list.innerHTML = `<div class="empty">등록된 공고가 없습니다.</div>`;
       return;
     }
 
+    // =====================================================
+    // 공고 렌더
+    // =====================================================
     list.innerHTML = jobs.map((j) => buildOwnerJobCard(j)).join("");
 
+    // 각 공고의 "지원자 보기" 버튼 연결
     $$(".btn-view-applicants").forEach((btn) => {
       btn.onclick = () => openApplicantsScreen?.(btn.dataset.jobId);
     });
 
-    // (옵션) “지원자 확인” 같은 버튼이 따로 있으면 첫 공고로 연결
+    // =====================================================
+    // (옵션) 상단 "지원자 확인" 버튼
+    // =====================================================
     $("#btn-owner-go-applicants") &&
       ($("#btn-owner-go-applicants").onclick = async () => {
         const first = state.ownerJobs?.[0];
-        if (!first) return alert("불러온 공고가 없습니다.");
+
+        if (!first) {
+          await Swal.fire({
+            icon: "info",
+            title: "공고 없음",
+            text: "불러온 공고가 없습니다.",
+            confirmButtonText: "확인"
+          });
+          return;
+        }
+
         await openApplicantsScreen?.(first.id);
       });
 
   } catch (err) {
     console.error(err);
-    alert("공고 목록을 불러오는 중 오류가 발생했습니다.");
+
+    // 로딩이 떠있을 수 있으니 닫기
+    Swal.close();
+
+    await Swal.fire({
+      icon: "error",
+      title: "불러오기 실패",
+      text: "공고 목록을 불러오는 중 오류가 발생했습니다.",
+      confirmButtonText: "확인"
+    });
   }
 }

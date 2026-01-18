@@ -44,22 +44,50 @@ export function initDetailScreen({ goto }) {
 
   applyBtn.addEventListener("click", async () => {
     try {
+      // ✅ 로딩 표시 (로그인 상태 확인 중)
+      Swal.fire({
+        title: "확인 중...",
+        text: "로그인 상태를 확인하고 있습니다.",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
       // 세션 기준 로그인 여부 확인
       const r = await getMe();
 
+      // ✅ 로딩 닫기
+      Swal.close();
+
+      // ✅ 비로그인
       if (!r.ok) {
-        alert("지원하려면 로그인해야 해!");
+        await Swal.fire({
+          icon: "warning",
+          title: "로그인이 필요합니다",
+          text: "지원하려면 먼저 로그인해주세요.",
+          confirmButtonText: "확인"
+        });
+
         __goto("login");
         return;
       }
 
-      // 로그인 상태 → 지원 화면으로
+      // ✅ 로그인 상태 → 지원 화면으로
       __goto("apply");
     } catch (e) {
       console.error(e);
-      alert("로그인 상태를 확인할 수 없습니다.");
+
+      // 로딩이 떠있을 수 있으니 닫기
+      Swal.close();
+
+      await Swal.fire({
+        icon: "error",
+        title: "확인 실패",
+        text: "로그인 상태를 확인할 수 없습니다. 다시 시도해주세요.",
+        confirmButtonText: "확인"
+      });
     }
   });
+
 }
 
 
@@ -70,14 +98,52 @@ export async function renderDetailScreen() {
     return;
   }
 
-  try {
-    await ensureJobsLoaded();
-  } catch (e) {
-    console.error(e);
-    alert("공고 정보를 불러오지 못했습니다.");
-    __goto?.("home");
-    return;
-  }
+  applyBtn.addEventListener("click", async () => {
+    try {
+      // ✅ 로딩 표시 (로그인 상태 확인 중)
+      Swal.fire({
+        title: "확인 중...",
+        text: "로그인 상태를 확인하고 있습니다.",
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      // 세션 기준 로그인 여부 확인
+      const r = await getMe();
+
+      // ✅ 로딩 닫기
+      Swal.close();
+
+      // ✅ 비로그인
+      if (!r.ok) {
+        await Swal.fire({
+          icon: "warning",
+          title: "로그인이 필요합니다",
+          text: "지원하려면 먼저 로그인해주세요.",
+          confirmButtonText: "확인"
+        });
+
+        __goto("login");
+        return;
+      }
+
+      // ✅ 로그인 상태 → 지원 화면으로
+      __goto("apply");
+    } catch (e) {
+      console.error(e);
+
+      // 로딩이 떠있을 수 있으니 닫기
+      Swal.close();
+
+      await Swal.fire({
+        icon: "error",
+        title: "확인 실패",
+        text: "로그인 상태를 확인할 수 없습니다. 다시 시도해주세요.",
+        confirmButtonText: "확인"
+      });
+    }
+  });
+
 
   const job = state.jobs.find((j) => String(j.id) === String(id));
   if (!job) {

@@ -1,7 +1,7 @@
 // /js/post/post.submit.js
 // 공고 등록 submit(검증 + API 호출) 전담
 
-import { $ , $$ } from "../core/dom.js";
+import { $, $$ } from "../core/dom.js";
 import { createOwnerJobPost } from "../api/jobs.api.js";
 import { isDaysNegotiable, isTimeNegotiable } from "./post.ui.js";
 
@@ -27,6 +27,18 @@ export function initPostSubmit({ goto }) {
   __bound = true;
 
   $("#btn-post-submit")?.addEventListener("click", onSubmitPost);
+}
+
+/**
+ * ✅ 필수 입력 경고 모달 (alert 대체)
+ */
+async function warnRequired(text) {
+  await Swal.fire({
+    icon: "warning",
+    title: "입력 확인",
+    text,
+    confirmButtonText: "확인"
+  });
 }
 
 /**
@@ -71,25 +83,25 @@ async function onSubmitPost() {
   const description = $("#post-desc")?.value.trim();
 
   // --------------------------------------------
-  // 2) 필수 검증(기존 로직 유지)
+  // 2) 필수 검증(기존 로직 유지) - alert -> Swal
   // --------------------------------------------
   if (!storeName || !title || !regionCity || !regionDistrict) {
-    alert("가게이름/공고제목/근무지역(시·구)은 필수야!");
+    await warnRequired("가게이름/공고제목/근무지역(시·구)은 필수입니다.");
     return;
   }
 
   if (!wageNegotiable && (!wage || wage <= 0)) {
-    alert("시급 금액을 입력하거나 '협의'를 선택해줘!");
+    await warnRequired("시급 금액을 입력하거나 '협의'를 선택해주세요.");
     return;
   }
 
   if (!daysNegotiable && days.length === 0) {
-    alert("근무요일을 선택하거나 '협의'를 선택해줘!");
+    await warnRequired("근무요일을 선택하거나 '협의'를 선택해주세요.");
     return;
   }
 
   if (!timeNegotiable && (!timeStart || !timeEnd)) {
-    alert("근무시간을 입력하거나 '협의'를 선택해줘!");
+    await warnRequired("근무시간을 입력하거나 '협의'를 선택해주세요.");
     return;
   }
 
@@ -113,14 +125,43 @@ async function onSubmitPost() {
   };
 
   // --------------------------------------------
-  // 4) API 호출
+  // 4) API 호출 - alert -> Swal + 로딩
   // --------------------------------------------
   try {
+    // ✅ 로딩
+    Swal.fire({
+      title: "등록 중...",
+      text: "공고를 등록하고 있습니다.",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
     await createOwnerJobPost(payload);
-    alert("공고 등록 완료!");
+
+    // ✅ 로딩 닫기
+    Swal.close();
+
+    // ✅ 성공
+    await Swal.fire({
+      icon: "success",
+      title: "등록 완료",
+      text: "공고 등록이 완료되었습니다.",
+      confirmButtonText: "확인"
+    });
+
     __goto?.("home");
   } catch (e) {
     console.error(e);
-    alert("공고 등록 실패: " + (e?.message || e));
+
+    // 로딩 떠있을 수 있으니 닫기
+    Swal.close();
+
+    // ✅ 실패
+    await Swal.fire({
+      icon: "error",
+      title: "등록 실패",
+      text: "공고 등록에 실패했습니다. 잠시 후 다시 시도해주세요.",
+      confirmButtonText: "확인"
+    });
   }
 }
