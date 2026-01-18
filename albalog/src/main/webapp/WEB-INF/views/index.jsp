@@ -7,7 +7,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <!-- ✅ JSP에서는 contextPath를 붙여서 정적 리소스를 로딩하는 게 안전해요 -->
   <link rel="stylesheet" href="/css/style.css">
-
 </head>
 <body>
   <div class="app">
@@ -390,17 +389,7 @@
       <!-- 7. 이력서 -->
 <section id="screen-resume" class="screen">
   <div class="screen-title">나의 이력서</div>
-    <!-- ✅ 후기 섹션 (이력서보다 위에) -->
-  <div id="review-section" class="review-section">
-    <div class="block-title">💬 사장님 후기</div>
-    <div id="review-list">
-      <p class="empty">아직 후기가 없습니다.</p>
-    </div>
-    <hr class="thin"/>
-  </div>
-  <div class="screen-sub">한 번만 작성해두면 지원 시 자동으로 불러옵니다.</div>
-  <!-- 기본정보 (자동 입력) -->
-<div class="block-title">기본정보</div>
+
 
 <div class="row">
   <div class="input-group flex1">
@@ -569,13 +558,25 @@
         <button class="btn outline" id="btn-dummy-msg">테스트 메시지 추가</button>
       </section>
 
-      <!-- 10. 내 지원 공고 -->
-      <section id="screen-myjobs" class="screen">
-        <div class="screen-title">내가 지원한 공고</div>
-        <div class="screen-sub">최근에 지원한 공고들을 한 곳에서 볼 수 있습니다.</div>
-
-        <div id="myjobs-list"></div>
-      </section>
+	<!-- 10. 내 지원 공고 -->
+	<section id="screen-myjobs" class="screen">
+	
+	  <div class="screen-title">내가 지원한 공고</div>
+	  <div class="screen-sub">최근에 지원한 공고들과 사장님 후기를 한 곳에서 확인할 수 있습니다.</div>
+	
+	  <!-- ✅ 받은 후기 섹션 (지원내역 상단) -->
+	  <div id="review-section" class="review-section">
+	    <div class="block-title">💬 사장님 후기</div>
+	    <div id="review-list">
+	      <p class="empty">아직 후기가 없습니다.</p>
+	    </div>
+	    <hr class="thin"/>
+	  </div>
+	
+	  <!-- ✅ 지원내역 리스트 -->
+	  <div id="myjobs-list"></div>
+	
+	</section>
 
       <!-- 11. 알바 후기 리스트 -->
       <section id="screen-reviews" class="screen">
@@ -641,10 +642,6 @@
 
   <div class="nav-item" data-target="messages" id="nav-messages">
     <span>💬</span><div>메시지</div>
-  </div>
-
-  <div class="nav-item" data-target="profile" id="nav-profile">
-    <span>👤</span><div>프로필</div>
   </div>
 
 </nav>
