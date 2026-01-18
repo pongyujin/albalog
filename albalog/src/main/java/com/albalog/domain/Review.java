@@ -5,17 +5,27 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "reviews")
-@Getter @Setter
+@Table(
+    name = "reviews",
+    uniqueConstraints = {
+        // ✅ DB와 동일하게: (application_id, phase) 유니크
+        @UniqueConstraint(name = "uq_reviews_application_phase", columnNames = {"application_id", "phase"})
+    }
+)
+@Getter
+@Setter
 public class Review {
 
     @Id
@@ -24,9 +34,20 @@ public class Review {
 
     // =====================================================
     // 🔗 FK: applications (후기 기준)
+    // ✅ 더 이상 application_id 단독 unique 아님
     // =====================================================
-    @Column(name = "application_id", nullable = false, unique = true)
+    @Column(name = "application_id", nullable = false)
     private Long applicationId;
+
+    // =====================================================
+    // ✅ 후기 단계
+    // - INITIAL : 채용 직후(기본)
+    // - MONTH_1 : 근무 1개월 후기
+    // - MONTH_3 : 근무 3개월 후기
+    // =====================================================
+    @Enumerated(EnumType.STRING)
+    @Column(name = "phase", nullable = false)
+    private ReviewPhase phase = ReviewPhase.INITIAL;
 
     // =====================================================
     // 🔗 FK: job_posts
