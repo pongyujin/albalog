@@ -3,7 +3,7 @@
 // - 상단: 사장님 후기(#review-list)
 // - 하단: 지원내역(#myjobs-list)
 
-import { $, $$ } from "../core/dom.js";
+import { $ } from "../core/dom.js";
 import { formatDateYMD } from "../core/utils.js"; // ✅ 이것만 사용
 import { getMe } from "../api/users.api.js";
 import { fetchMyApplications } from "../api/applications.api.js";
@@ -42,14 +42,13 @@ function buildReviewCard(r) {
   // -------------------------------
   // 3) 가게명 + "사장님 후기"
   // - 백엔드에서 ReviewResponse에 storeName 내려주도록 했을 때 사용
-  // - 혹시 없으면 기본 문구로 fallback
+  // - 없으면 기본 문구로 fallback
   // -------------------------------
   const storeName = (r?.storeName ?? "").trim();
   const title = storeName ? `${escapeHtml(storeName)} 사장님 후기` : "사장님 후기";
 
   // -------------------------------
   // 4) phase 라벨(선택)
-  // - 네가 원하는 "1개월 후기" 같은 문구를 위/아래에 표시 가능
   // -------------------------------
   const phase = String(r?.phase ?? "").trim();
   const phaseLabel =
@@ -72,7 +71,6 @@ function buildReviewCard(r) {
     </div>
   `;
 }
-
 
 // ======================================================
 // ✅ 후기 섹션 렌더
@@ -112,26 +110,71 @@ async function renderMyReviewsSection() {
   wrap.innerHTML = list.map(buildReviewCard).join("");
 }
 
+
 // ======================================================
-// ✅ 지원내역 카드 생성
+// ✅ 지원내역 카드 생성 (시급 자리 = 상태/메시지로 대체)
 // ======================================================
 function buildMyJobCard(j) {
-  const wageNum = Number(j?.wage ?? 0);
-  const wageLabel = j?.wageType === "HOURLY" ? "시" : (j?.wageType || "");
 
-  const appliedAt = formatDateYMD(j?.appliedAt);
+  // -------------------------------
+  // 0) 데이터 정리
+  // -----------------
+  const appliedAt = formatDateYMD(j?.createdAt);
+
   const readAt = j?.readAt ? formatDateYMD(j.readAt) : null;
 
+
+  const status = String(j?.status ?? "PENDING").toUpperCase();
+
+  const applicationId = j?.applicationId ?? j?.id ?? "";
+
+
+  // -------------------------------
+  // 1) "시급 배지 자리"에 들어갈 UI 만들기
+  // -------------------------------
+  // - PENDING이면 기존처럼 시급 보여줘도 되는데,
+  //   너는 채용/거절만 강조하자고 했으니 PENDING은 시급 유지(원하면 빈칸 처리도 가능)
+  const wageNum = Number(j?.wage ?? 0);
+  const wageLabel = j?.wageType === "HOURLY" ? "시" : (j?.wageType || "");
+  const wageUi = `
+    <div class="badge pay myjob-pay">
+      ${wageNum.toLocaleString()}원/${escapeHtml(wageLabel)}
+    </div>
+  `;
+
+  // ✅ 채용/거절 UI를 pay 자리로 올림
+  const statusPayUi =
+    status === "ACCEPTED"
+      ? `
+        <div class="myjob-pay-actions">
+          <div class="hire-label">✅ 채용됨</div>
+          <button
+            class="btn message btn-myjob-message"
+            data-application-id="${escapeHtml(applicationId)}"
+          >메시지</button>
+        </div>
+      `
+      : status === "REJECTED"
+        ? `
+          <div class="myjob-pay-actions">
+            <div class="reject-label">거절됨</div>
+          </div>
+        `
+        : wageUi; // ✅ PENDING은 일단 시급 유지 (원하면 ""로 바꿀 수 있음)
+
+  // -------------------------------
+  // 2) 카드 HTML
+  // -------------------------------
   return `
-    <div class="job-card">
+    <div class="job-card ${status === "ACCEPTED" ? "accepted" : status === "REJECTED" ? "rejected" : "pending"}">
       <div class="job-top myjob-top">
         <div class="myjob-top-row">
           <div class="job-title myjob-title">
             ${escapeHtml(j?.jobTitle ?? "")}
           </div>
-          <div class="badge pay myjob-pay">
-            ${wageNum.toLocaleString()}원/${escapeHtml(wageLabel)}
-          </div>
+
+          <!-- ✅ 여기(시급 배지 자리)가 상태/메시지 자리로 변경됨 -->
+          ${statusPayUi}
         </div>
 
         <div class="job-company myjob-company">
@@ -155,12 +198,43 @@ function buildMyJobCard(j) {
       </div>
     </div>
   `;
+  
+  
 }
+
 
 // ======================================================
 // ✅ 메인 렌더 함수
 // ======================================================
 export async function renderMyJobsScreen() {
+  // ------------------------------------------------------
+  // 0) (이벤트) 메시지 버튼 클릭 처리 (이벤트 위임)
+  // - render할 때마다 바인딩되지 않게 dataset.bound로 1회만
+  // ------------------------------------------------------
+  const listElForBind = $("#myjobs-list");
+  if (listElForBind && listElForBind.dataset.bound !== "1") {
+    listElForBind.dataset.bound = "1";
+
+    listElForBind.addEventListener("click", async (e) => {
+      const btn = e.target.closest(".btn-myjob-message");
+      if (!btn) return;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      // ✅ 나중에 채팅/메시지 화면으로 이동할 때 applicationId 활용 가능
+      const appId = btn.dataset.applicationId;
+
+      // 지금은 준비중 처리(요구사항에 맞춰 최소 동작)
+      await Swal.fire({
+        icon: "info",
+        title: "준비 중",
+        text: `메시지 기능은 준비 중입니다. (applicationId: ${appId || "-"})`,
+        confirmButtonText: "확인"
+      });
+    });
+  }
+
   // 1) 후기 섹션
   try {
     await renderMyReviewsSection();

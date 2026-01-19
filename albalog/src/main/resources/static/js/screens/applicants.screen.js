@@ -220,127 +220,221 @@ export function initApplicantsScreen({ goto }) {
     __goto?.("applicants");
   });
   
-  
- // ✅ 지원자 카드 리스트 이벤트 위임
+  // ======================================================
+// ✅ 지원자 카드 리스트 이벤트 위임 (최종)
+// - 후기 버튼
+// - 거절 / 채용 / 메시지
+// - 카드 클릭 → 이력서 열기
+// ======================================================
 $("#applicants-list")?.addEventListener("click", async (e) => {
-  // -------------------------------------------------------
-  // 0) "후기 버튼"인지 먼저 판별
-  // - 버튼 안의 아이콘/텍스트 클릭해도 동작하게 closest 사용
-  // -------------------------------------------------------
-  const reviewBtn = e.target.closest(".review-btn");
-  if (!reviewBtn) return; // ✅ 후기 버튼 아니면 여기서 끝
 
-  e.preventDefault();
-  e.stopPropagation();
-
-  // -------------------------------------------------------
-  // 1) 어떤 지원서(card)인지 찾기
-  // -------------------------------------------------------
-  const card = reviewBtn.closest(".msg-card");
+  // --------------------------------------------------
+  // 0) 카드 찾기 (모든 동작의 기준)
+  // --------------------------------------------------
+  const card = e.target.closest(".msg-card");
   if (!card) return;
 
-  // ✅ dataset.id에는 applicationId가 들어있게 만들었음(네 buildApplicantCard 기준)
   const appId = card.dataset.id;
+  if (!appId) return;
 
-  // -------------------------------------------------------
-  // 2) 버튼이 가지고 있는 mode/phase 읽기
-  // -------------------------------------------------------
-  // mode 종류:
-  // - WRITE    : 후기 작성 화면으로 이동
-  // - VIEW_ALL : 작성한 후기 전체 보기(모달 1개)
-  const mode = reviewBtn.dataset.mode || "WRITE";
+  // ==================================================
+  // 1) 후기 버튼 처리
+  // ==================================================
+  const reviewBtn = e.target.closest(".review-btn");
+  if (reviewBtn) {
+    e.preventDefault();
+    e.stopPropagation();
 
-  // phase 종류 (WRITE일 때만 의미 있음):
-  // - INITIAL / MONTH_1 / MONTH_3
-  // VIEW_ALL에서는 phase를 사용하지 않음(전체를 보여주니까)
-  const phase = reviewBtn.dataset.phase || "INITIAL";
+    const mode  = reviewBtn.dataset.mode || "WRITE";
+    const phase = reviewBtn.dataset.phase || "INITIAL";
 
-  // =====================================================
-  // (A) WRITE: 후기 작성 화면으로 이동
-  // =====================================================
-  if (mode === "WRITE") {
-    // ✅ 어떤 지원건에 대한 후기인지
-    state.selectedApplicationIdForReview = appId;
+    // -----------------------------
+    // (A) WRITE → 후기 작성 화면
+    // -----------------------------
+    if (mode === "WRITE") {
+      state.selectedApplicationIdForReview = appId;
+      state.reviewPhase = phase; // INITIAL / MONTH_1 / MONTH_3
+      __goto?.("reviewWrite");
+      return;
+    }
 
-    // ✅ 어떤 단계 후기인지 (INITIAL/MONTH_1/MONTH_3)
-    // - reviewWrite 화면에서 payload에 phase를 넣기 위해 필요
-    state.reviewPhase = phase;
+    // -----------------------------
+    // (B) VIEW_ALL → 후기 전체 보기
+    // -----------------------------
+    if (mode === "VIEW_ALL") {
+      const bucket = __reviewsByAppId.get(String(appId)) || {};
 
-    __goto?.("reviewWrite");
-    return;
-  }
+      const orderedPhases = ["INITIAL", "MONTH_1", "MONTH_3"];
+      const reviews = orderedPhases
+        .map((p) => bucket[p])
+        .filter(Boolean);
 
-  // =====================================================
-  // (B) VIEW_ALL : 작성한 후기 전체 보기 (모달 1개)
-  // =====================================================
-  if (mode === "VIEW_ALL") {
-    // ✅ 해당 지원건의 후기 묶음 가져오기
-    // bucket 구조: { INITIAL?: review, MONTH_1?: review, MONTH_3?: review }
-    const bucket = __reviewsByAppId.get(String(appId)) || {};
+      if (reviews.length === 0) {
+        await Swal.fire({
+          icon: "info",
+          title: "후기 없음",
+          text: "작성된 후기가 없습니다.",
+          confirmButtonText: "확인"
+        });
+        return;
+      }
 
-    // ✅ 보여줄 순서 고정
-    const orderedPhases = ["INITIAL", "MONTH_1", "MONTH_3"];
+      const phaseLabel = (p) => {
+        if (p === "INITIAL") return "채용 직후 후기";
+        if (p === "MONTH_1") return "1개월 후기";
+        if (p === "MONTH_3") return "3개월 후기";
+        return p;
+      };
 
-    // ✅ 실제 존재하는 후기만 필터
-    const reviews = orderedPhases
-      .map((p) => bucket[p])
-      .filter(Boolean);
+      const html = reviews.map((r) => `
+        <div style="margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #eee; text-align:left;">
+          <div style="font-weight:bold; margin-bottom:6px;">
+            ${phaseLabel(r.phase)}
+          </div>
+          <div>⭐ 별점: ${r.rating}</div>
+          <div style="margin-top:4px;">
+            ${String(r.comment || "").replaceAll("\n", "<br/>")}
+          </div>
+          <div style="margin-top:6px; font-size:12px; color:#666;">
+            작성일: ${r.createdAt || "-"}
+          </div>
+        </div>
+      `).join("");
 
-    // ✅ 방어: 아무 후기도 없을 경우
-    if (reviews.length === 0) {
       await Swal.fire({
         icon: "info",
-        title: "후기 없음",
-        text: "작성된 후기가 없습니다.",
+        title: "작성한 후기",
+        html,
+        width: 540,
         confirmButtonText: "확인"
       });
       return;
     }
 
-    // ✅ 단계명 한글 변환용 헬퍼
-    const phaseLabel = (p) => {
-      if (p === "INITIAL") return "채용 직후 후기";
-      if (p === "MONTH_1") return "1개월 후기";
-      if (p === "MONTH_3") return "3개월 후기";
-      return p;
-    };
+    console.warn("[review-btn] unknown mode:", mode);
+    return;
+  }
 
-    // ✅ 모달 HTML 생성
-    // - 코멘트 줄바꿈(\n) 처리
-    const html = reviews.map((r) => `
-      <div style="margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #eee; text-align:left;">
-        <div style="font-weight:bold; margin-bottom:6px;">
-          ${phaseLabel(r.phase)}
-        </div>
-        <div>⭐ 별점: ${r.rating}</div>
-        <div style="margin-top:4px;">
-          ${String(r.comment || "").replaceAll("\n", "<br/>")}
-        </div>
-        <div style="margin-top:6px; font-size:12px; color:#666;">
-          작성일: ${r.createdAt || "-"}
-        </div>
-      </div>
-    `).join("");
+  // ==================================================
+  // 2) 액션 버튼 영역 (거절 / 채용 / 메시지)
+  // ==================================================
+  const actionArea = e.target.closest(".applicant-actions-vertical");
+  if (actionArea) {
 
-    // ✅ 모달 표시
-    await Swal.fire({
-      icon: "info",
-      title: "작성한 후기",
-      html,
-      width: 540,
-      confirmButtonText: "확인"
-    });
+    // -----------------------------
+    // (A) 거절
+    // -----------------------------
+    if (e.target.classList.contains("reject")) {
+      const result = await Swal.fire({
+        icon: "warning",
+        title: "지원자를 거절할까요?",
+        text: "거절 후에는 되돌릴 수 없습니다.",
+        showCancelButton: true,
+        confirmButtonText: "거절하기",
+        cancelButtonText: "취소"
+      });
+
+      if (!result.isConfirmed) return;
+
+      await updateApplicationStatus(appId, "REJECTED");
+
+      card.classList.add("rejected");
+      card.classList.remove("accepted");
+
+      await Swal.fire({
+        icon: "success",
+        title: "거절 완료",
+        confirmButtonText: "확인"
+      });
+      return;
+    }
+
+    // -----------------------------
+    // (B) 채용
+    // -----------------------------
+    if (e.target.classList.contains("accept")) {
+      const result = await Swal.fire({
+        icon: "question",
+        title: "지원자를 채용할까요?",
+        showCancelButton: true,
+        confirmButtonText: "채용하기",
+        cancelButtonText: "취소"
+      });
+
+      if (!result.isConfirmed) return;
+
+      await updateApplicationStatus(appId, "ACCEPTED");
+
+      card.classList.add("accepted");
+      card.classList.remove("rejected");
+
+      const actions = card.querySelector(".applicant-actions-vertical");
+      if (actions) {
+        actions.innerHTML = `
+          <div class="hire-label">✅ 채용됨</div>
+          <button class="btn message">메시지</button>
+        `;
+      }
+
+      await Swal.fire({
+        icon: "success",
+        title: "채용 완료",
+        confirmButtonText: "확인"
+      });
+      return;
+    }
+
+    // -----------------------------
+    // (C) 메시지
+    // -----------------------------
+    if (e.target.classList.contains("message")) {
+      await Swal.fire({
+        icon: "info",
+        title: "준비 중",
+        text: "메시지 기능은 준비 중입니다.",
+        confirmButtonText: "확인"
+      });
+      return;
+    }
 
     return;
   }
 
-  // --------------------------------------------------
-  // 여기까지 왔다면 정의되지 않은 mode (방어)
-  // --------------------------------------------------
-  console.warn("[review-btn] unknown mode:", mode);
+  // ==================================================
+  // 3) 카드 클릭 → 이력서 열기
+  // ==================================================
+  try {
+    Swal.fire({
+      title: "불러오는 중...",
+      allowOutsideClick: false,
+      didOpen: () => Swal.showLoading()
+    });
+
+    const r = await fetchResumeByApplication(appId);
+    Swal.close();
+
+    if (!r.ok) {
+      await Swal.fire({
+        icon: "info",
+        title: "이력서 없음",
+        confirmButtonText: "확인"
+      });
+      return;
+    }
+
+    openResumeViewMode(r.data);
+  } catch (err) {
+    console.error(err);
+    Swal.close();
+
+    await Swal.fire({
+      icon: "error",
+      title: "불러오기 실패",
+      confirmButtonText: "확인"
+    });
+  }
 });
 }
-
 
 /**
  * ✅ 특정 공고의 지원자 목록을 불러와 applicants 화면으로 이동

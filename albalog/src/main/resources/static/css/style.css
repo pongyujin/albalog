@@ -1201,3 +1201,120 @@ select.step{ max-width: 96px; }
 #screen-signup .check-row input[type="checkbox"]:active{
   transform: scale(0.96);
 }
+/* =========================================
+   ✅ 알바생 지원내역(job-card) 상태별 스타일
+   - 채용됨 / 거절됨만 강조
+   ========================================= */
+
+.job-card{
+  transition: border 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+/* ✅ 채용됨 */
+.job-card.accepted{
+  border: 2px solid var(--ok); /* 기존 톤 유지 */
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.3);
+}
+
+.job-card.accepted:hover{
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+/* ✅ 거절됨 */
+.job-card.rejected{
+  border: 2px solid #d1d5db;
+  opacity: 0.7;
+}
+
+
+/* ✅ 거절 라벨은 “빨강 과함” 피하고 회색 배지 톤 */
+.reject-label{
+
+    width: 52px;
+
+  padding: 10px 0;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 900;
+  text-align: center;
+
+  background: #f3f4f6;
+  border: 1px solid rgba(107,114,128,.35);
+  color: #374151;
+
+  box-shadow: 0 2px 10px rgba(15,23,42,.04);
+}
+
+
+.job-card.rejected{
+  border: 2px solid #d1d5db;
+  opacity: 0.7;
+}
+/* =========================================
+   myjobs: 제목 줄 오른쪽에 상태/메시지 배치
+   (네가 인라인으로 준 값 그대로 CSS로)
+   ========================================= */
+
+/* job-top을 세로로 */
+.myjob-top{
+  display:flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 제목 + 오른쪽 액션을 한 줄에 */
+.myjob-top-row{
+  display:flex;
+  align-items:flex-start;         /* 위 기준 정렬 */
+  justify-content: space-between; /* 좌/우 끝 */
+  gap: 12px;
+  width:100%;
+}
+
+/* 제목 말줄임 + 여백 */
+.myjob-title{
+  flex: 1;
+  min-width: 0;
+  overflow:hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  /* 네가 인라인로 주려던 “위아래 두께감”은 padding으로 처리하는 게 맞음 */
+  padding: 10px 0; /* 🔥 border-width 말고 padding */
+}
+
+/* 오른쪽(시급자리) 액션 래퍼 */
+.myjob-pay-actions{
+  display:flex;
+  flex-direction: column;
+  align-items: flex-end; /* 오른쪽 정렬 */
+  gap: 5px;              /* 메시지 버튼 위 간격 */
+}
+
+/* 채용됨 라벨: myjobs에서는 조금 더 작게 */
+.myjob-pay-actions .hire-label{
+  margin-top: 0;  /* 네 인라인: margin-top:0 */
+  width: 82px;    /* 네 인라인: width:82px */
+  padding: 8px 0; /* 기존 hire-label 톤 유지하면서 높이 확보 */
+}
+
+/* 메시지 버튼: myjobs에서는 버튼 크기 고정 */
+.myjob-pay-actions .btn-myjob-message{
+  width: 81px;     /* 네 인라인: width:81px */
+  height: 32px;    /* 네 인라인: height:32px */
+  margin-top: 0;   /* 기본 .btn margin-top(10px) 제거 */
+  padding: 0;      /* height로 고정했으니 padding 제거 */
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 32px; /* 텍스트 세로 중앙 */
+}
+
+/* myjobs에서만: .btn 기본 margin-top(10px) 영향 제거 */
+.myjob-pay-actions .btn{
+  margin-top: 0;
+}
+
+
+
+
