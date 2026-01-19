@@ -22,28 +22,57 @@ function escapeHtml(str) {
 }
 
 // ======================================================
-// ✅ 후기 카드 생성
+// ✅ 후기 카드 생성 (가게명 + 단계 라벨 표시)
 // ======================================================
 function buildReviewCard(r) {
+  // -------------------------------
+  // 1) 별점 표시(1자리 고정)
+  // -------------------------------
   const ratingNum = Number(r?.rating);
   const ratingText = Number.isFinite(ratingNum)
     ? ratingNum.toFixed(1)
     : String(r?.rating ?? "-");
 
+  // -------------------------------
+  // 2) 코멘트/작성일
+  // -------------------------------
   const comment = (r?.comment ?? "").trim();
   const created = formatDateYMD(r?.createdAt);
+
+  // -------------------------------
+  // 3) 가게명 + "사장님 후기"
+  // - 백엔드에서 ReviewResponse에 storeName 내려주도록 했을 때 사용
+  // - 혹시 없으면 기본 문구로 fallback
+  // -------------------------------
+  const storeName = (r?.storeName ?? "").trim();
+  const title = storeName ? `${escapeHtml(storeName)} 사장님 후기` : "사장님 후기";
+
+  // -------------------------------
+  // 4) phase 라벨(선택)
+  // - 네가 원하는 "1개월 후기" 같은 문구를 위/아래에 표시 가능
+  // -------------------------------
+  const phase = String(r?.phase ?? "").trim();
+  const phaseLabel =
+    phase === "INITIAL" ? "채용 직후 후기" :
+    phase === "MONTH_1" ? "1개월 후기" :
+    phase === "MONTH_3" ? "3개월 후기" :
+    "";
 
   return `
     <div class="review-card">
       <div class="review-top">
-        <div class="review-name">사장님 후기</div>
+        <div class="review-name">${title}</div>
         <div class="badge star">⭐ ${ratingText}</div>
       </div>
+
+      ${phaseLabel ? `<div class="review-text">${escapeHtml(phaseLabel)}</div>` : ""}
+
       <div class="review-text">${escapeHtml(comment || "코멘트 없음")}</div>
       <div class="msg-meta">${created}</div>
     </div>
   `;
 }
+
 
 // ======================================================
 // ✅ 후기 섹션 렌더

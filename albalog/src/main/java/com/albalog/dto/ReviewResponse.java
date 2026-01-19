@@ -27,6 +27,9 @@ public class ReviewResponse {
     private Long jobPostId;
     private Long ownerId;
     private Long workerId;
+    
+    // ✅ 추가
+    private String storeName;
 
     private BigDecimal rating;
     private String comment;
@@ -44,8 +47,22 @@ public class ReviewResponse {
         this.jobPostId = r.getJobPostId();
         this.ownerId = r.getOwnerId();
         this.workerId = r.getWorkerId();
+   
+        
         this.rating = r.getRating();
         this.comment = r.getComment();
         this.createdAt = r.getCreatedAt();
+    }
+    public ReviewResponse(Review r, String storeName) {
+        this.id = r.getId();
+        this.applicationId = r.getApplicationId();
+        this.phase = r.getPhase();
+        this.jobPostId = r.getJobPostId();
+        this.ownerId = r.getOwnerId();
+        this.workerId = r.getWorkerId();
+        this.rating = r.getRating();
+        this.comment = r.getComment();
+        this.createdAt = r.getCreatedAt();
+        this.storeName = storeName;
     }
 }

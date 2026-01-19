@@ -111,14 +111,30 @@ public class ReviewService {
         return new ReviewResponse(saved);
     }
 
-    // ✅ worker 기준 후기 조회
     @Transactional(readOnly = true)
     public List<ReviewResponse> getReviewsByWorker(Long workerId) {
+
         return reviewRepository.findByWorkerIdOrderByCreatedAtDesc(workerId)
                 .stream()
-                .map(ReviewResponse::new)
+                .map(review -> {
+
+                    // ✅ applicationId → Application 조회
+                    Application app = applicationRepository
+                            .findById(review.getApplicationId())
+                            .orElse(null);
+
+                    // ✅ Application → JobPost → storeName
+                    String storeName = null;
+                    if (app != null && app.getJobPost() != null) {
+                        storeName = app.getJobPost().getStoreName();
+                    }
+
+                    // ✅ storeName을 함께 내려줌
+                    return new ReviewResponse(review, storeName);
+                })
                 .toList();
     }
+
 
     // ✅ 공고 기준 후기 조회
     @Transactional(readOnly = true)
