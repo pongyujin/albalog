@@ -64,7 +64,8 @@ public class ReviewService {
         // 4) ✅ 이번 단계에서는 후기 phase를 INITIAL로 고정
         //    (추후 MONTH_1/MONTH_3 확장 가능)
         // ------------------------------------------------------
-        ReviewPhase phase = ReviewPhase.INITIAL;
+        ReviewPhase phase = (req.getPhase() != null) ? req.getPhase() : ReviewPhase.INITIAL;
+
 
         // ------------------------------------------------------
         // 5) ✅ 이미 후기 작성했는지 확인 (지원건 + phase)

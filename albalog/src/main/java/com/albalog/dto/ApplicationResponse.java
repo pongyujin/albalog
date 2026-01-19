@@ -36,6 +36,13 @@ public class ApplicationResponse {
     private String description;
     private LocalDateTime createdAt; // 지원 시각
     private LocalDateTime readAt;    // 사장님이 열람한 시각
+    
+
+    // ✅ (추가) 채용 확정 시각
+    // - 1개월/3개월 후기 버튼 활성화 기준 시간
+    // - status=ACCEPTED 인 경우 값이 들어있을 수 있음
+    private LocalDateTime acceptedAt;
+
     private String status; // ✅ 추가!
 
     // 이력서 요약
@@ -63,6 +70,11 @@ public class ApplicationResponse {
         this.description = a.getDescription();
         this.createdAt = a.getCreatedAt();
         this.readAt = a.getViewedAt(); // 사장님이 열람한 시간 기록
+        
+        // ✅ (추가) 채용 확정 시각 내려주기
+        // - DB에 accepted_at 컬럼이 있고, Entity에도 acceptedAt이 있어야 null이 아니게 내려옴
+        this.acceptedAt = a.getAcceptedAt();
+        
         this.status = a.getStatus().name(); // ✅ 상태 문자열로 변환
 
         // ✅ JobPost 정보 추가 (공고 정보)

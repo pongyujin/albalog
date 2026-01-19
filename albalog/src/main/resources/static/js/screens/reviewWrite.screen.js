@@ -129,16 +129,18 @@ async function onSubmitReview() {
     await showInfo("코멘트 필요", "코멘트를 입력해주세요.");
     return;
   }
-
   // -------------------------------------------------------
   // 3) payload 구성 (서버 DTO: ReviewRequest)
-  // - rating은 BigDecimal로 받지만 JSON number면 자동 변환됨
+  // - phase는 applicants 화면에서 state.reviewPhase로 세팅됨
+  // - 없으면 안전하게 INITIAL로 기본값 처리
   // -------------------------------------------------------
   const payload = {
     applicationId: Number(appId),
-    rating: rating,     // 0.5 단위
+    phase: state.reviewPhase || "INITIAL", // ✅ 추가: INITIAL/MONTH_1/MONTH_3
+    rating: rating,                        // 0.5 단위
     comment: comment
   };
+
 
   // -------------------------------------------------------
   // 4) API 호출
@@ -159,6 +161,9 @@ async function onSubmitReview() {
     // ✅ 상태 정리 (다음 진입 시 꼬임 방지)
     state.reviewTargetAppId = null;
     state.selectedApplicationIdForReview = null;
+	
+	// ✅ 추가: 다음 후기 작성 시 꼬임 방지
+	state.reviewPhase = null;
 
     // ✅ 지원자 목록으로 복귀
     __goto?.("applicants");
@@ -202,6 +207,9 @@ export function initReviewWriteScreen({ goto }) {
     // 상태 정리
     state.reviewTargetAppId = null;
     state.selectedApplicationIdForReview = null;
+	
+	// ✅ 추가: 다음 진입 시 phase가 남아있지 않게
+	state.reviewPhase = null;
 
     __goto?.("applicants");
   });

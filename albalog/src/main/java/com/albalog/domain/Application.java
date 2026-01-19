@@ -47,6 +47,15 @@ public class Application {
     // ✅ 생성일, 열람일
     private LocalDateTime createdAt;
     private LocalDateTime viewedAt;
+    
+	 // ------------------------------------------------------
+	 // ✅ 채용 확정 시점
+	 // - 1개월 / 3개월 후기 활성화 기준 시간
+	 // - status = ACCEPTED 일 때만 값이 있음
+	 // ------------------------------------------------------
+	 @Column(name = "accepted_at")
+	 private LocalDateTime acceptedAt;
+
 
     @PrePersist
     public void prePersist() {

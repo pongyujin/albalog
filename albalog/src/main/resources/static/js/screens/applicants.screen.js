@@ -15,10 +15,11 @@ import { getReviewsByJob } from "../api/reviews.api.js";
 
 let __goto = null;
 let __bound = false;
-// ✅ (추가) 공고 기준 "INITIAL 후기" 인덱스
-// - key: applicationId (string/number를 모두 커버하려고 string으로 통일)
-// - value: ReviewResponse(phase=INITIAL) 객체
-let __initialReviewByAppId = new Map();
+
+// ✅ (수정) 공고 기준 "후기" 인덱스 (phase별로 저장)
+// - key: applicationId(string)
+// - value: { INITIAL?: review, MONTH_1?: review, MONTH_3?: review }
+let __reviewsByAppId = new Map();
 
 // ✅ (추가) 현재 applicants 화면이 보고 있는 jobId 저장
 // - openApplicantsScreen(jobId)에서 세팅
@@ -51,27 +52,31 @@ async function buildInitialReviewMap(jobId) {
   }
 
   // -------------------------------------------------------
-  // 3) INITIAL 후기만 골라서 Map 구성
+  // 3) phase별로 Map 구성
   // - applicationId를 key로 사용
   // -------------------------------------------------------
   const map = new Map();
   const list = Array.isArray(r.data) ? r.data : [];
 
   for (const item of list) {
-    // ✅ 방어: 필드가 없으면 스킵
+    // ✅ phase는 서버에서 내려오는 상태(확인 완료)
     const phase = String(item?.phase || "").trim();
     const appId = item?.applicationId;
 
     if (!appId) continue;
-    if (phase !== "INITIAL") continue;
+    if (!phase) continue;
 
-    // ✅ key는 문자열로 통일 (dataset.id도 문자열이기 때문)
-    map.set(String(appId), item);
+    const key = String(appId);
+
+    // ✅ applicationId별 묶음 객체 준비
+    if (!map.has(key)) map.set(key, {});
+
+    // ✅ 해당 phase에 review 저장
+    map.get(key)[phase] = item;
   }
 
   return map;
 }
-
 
 /**
  * ✅ 지원자 카드 HTML 생성
@@ -100,45 +105,80 @@ function buildApplicantCard(a) {
         </div>
       `;
 
-	  // ✅ (수정) a에서 "지원서(application) id"를 확실히 뽑아낸다
-	  // - 백엔드/DTO에 따라 필드명이 다를 수 있어서 방어적으로 처리
-	  // - 여기 값이 __initialReviewByAppId의 key(review.applicationId)와 동일해야 버튼이 바뀜
-	  const applicationId =
-	    a.applicationId != null ? a.applicationId :     // 가장 흔한 케이스
-	    a.id != null ? a.id : null;
+  // -------------------------------------------------------
+  // ✅ (버튼 UX 정리) 후기 버튼 렌더링 규칙
+  // - 보기 버튼: 작성된 후기가 1개라도 있으면 "VIEW_ALL" 1개만 노출
+  // - 작성 버튼: 작성 가능할 때만 노출 (대기중/disabled 버튼 없음)
+  // -------------------------------------------------------
 
-	  // ✅ (수정) INITIAL 후기 존재 여부 확인 (key는 문자열 통일)
-	  const initialReview = applicationId != null
-	    ? __initialReviewByAppId.get(String(applicationId))
-	    : null;
+  // ✅ applicationId 결정 (dataset.id에 들어갈 값)
+  const applicationId =
+    a.applicationId != null ? a.applicationId :
+    a.id != null ? a.id : null;
 
-	  const hasInitial = !!initialReview;
-	  
-	  // ✅ (디버그) 버튼 상태가 왜 안 바뀌는지 확인용
-	  // - applicationId가 뭔지
-	  // - map에 그 key가 실제 존재하는지
-	  console.log("[debug] card id fields:", {
-	    a_id: a?.id,
-	    a_applicationId: a?.applicationId,
-	    picked_applicationId: applicationId,
-	    hasInitial,
-	    mapHasKey: applicationId != null ? __initialReviewByAppId.has(String(applicationId)) : false
-	  });
+  // ✅ 후기 묶음(bucket)
+  const bucket = applicationId != null
+    ? (__reviewsByAppId.get(String(applicationId)) || {})
+    : {};
 
+  // ✅ 후기 존재 여부(각 phase)
+  const hasInitial = !!bucket["INITIAL"];
+  const hasMonth1  = !!bucket["MONTH_1"];
+  const hasMonth3  = !!bucket["MONTH_3"];
 
+  // ✅ 후기 1개라도 있으면 보기 버튼 노출
+  const reviewCount = [hasInitial, hasMonth1, hasMonth3].filter(Boolean).length;
 
-	  // ✅ 버튼에 data-mode를 심어서 클릭 핸들러에서 분기
-	  // - WRITE: 후기 작성 화면으로 이동
-	  // - VIEW : 작성한 후기 보기(Swal)
-	  const reviewBtn =
-	    a.status === "ACCEPTED"
-	      ? hasInitial
-	        ? `<button class="btn outline review-btn" data-mode="VIEW">👀 작성한 후기 보기</button>`
-	        : `<button class="btn outline review-btn" data-mode="WRITE">📝 후기 남기기</button>`
-	      : "";
+  // ✅ 채용 시각 기반 작성 가능 여부
+  const acceptedAt = a?.acceptedAt ? new Date(a.acceptedAt) : null;
+  const acceptedOk = acceptedAt && !Number.isNaN(acceptedAt.getTime());
 
+  const month1Ready = acceptedOk
+    ? (Date.now() >= acceptedAt.getTime() + 30 * 24 * 60 * 60 * 1000)
+    : false;
+
+  const month3Ready = acceptedOk
+    ? (Date.now() >= acceptedAt.getTime() + 90 * 24 * 60 * 60 * 1000)
+    : false;
+
+  // ✅ 1) 작성한 후기 보기 (VIEW_ALL)
+  const viewAllBtn =
+    a.status === "ACCEPTED" && reviewCount > 0
+      ? `<button class="btn outline review-btn" data-mode="VIEW_ALL">👀 작성한 후기 보기</button>`
+      : "";
+
+  // ✅ 2) INITIAL 작성 (없을 때만)
+  const writeInitialBtn =
+    a.status === "ACCEPTED" && !hasInitial
+      ? `<button class="btn outline review-btn" data-phase="INITIAL" data-mode="WRITE">📝 후기 남기기</button>`
+      : "";
+
+  // ✅ 3) 1개월 작성 (가능할 때만)
+  const writeMonth1Btn =
+    a.status === "ACCEPTED" && month1Ready && !hasMonth1
+      ? `<button class="btn outline review-btn" data-phase="MONTH_1" data-mode="WRITE">📝 1개월 후기 작성하기</button>`
+      : "";
+
+  // ✅ 4) 3개월 작성 (가능할 때만)
+  const writeMonth3Btn =
+    a.status === "ACCEPTED" && month3Ready && !hasMonth3
+      ? `<button class="btn outline review-btn" data-phase="MONTH_3" data-mode="WRITE">📝 3개월 후기 작성하기</button>`
+      : "";
+
+  // ✅ 최종 버튼 묶음(세로 스택)
+  const reviewBtns =
+    a.status === "ACCEPTED"
+      ? `<div class="applicant-review-actions">
+           ${viewAllBtn}
+           ${writeInitialBtn}
+           ${writeMonth1Btn}
+           ${writeMonth3Btn}
+         </div>`
+      : "";
+
+  // ✅ card dataset.id에는 "applicationId"를 넣어야 click handler에서 appId로 바로 씀
   return `
-  	<div class="msg-card ${statusClass}" data-id="${applicationId ?? a.id}">
+    <div class="msg-card ${statusClass}" data-id="${applicationId ?? a.id}">
       <div class="applicant-card-inner">
         <div class="applicant-info">
           <div class="msg-title">${a.applicantName || "이름 없음"} (${a.applicantAge || "-"}세)</div>
@@ -151,7 +191,7 @@ function buildApplicantCard(a) {
         ${actionButtons}
       </div>
 
-      ${reviewBtn}
+      ${reviewBtns}
     </div>
   `;
 }
@@ -179,247 +219,128 @@ export function initApplicantsScreen({ goto }) {
     state.viewingResume = null;
     __goto?.("applicants");
   });
+  
+  
+ // ✅ 지원자 카드 리스트 이벤트 위임
+$("#applicants-list")?.addEventListener("click", async (e) => {
+  // -------------------------------------------------------
+  // 0) "후기 버튼"인지 먼저 판별
+  // - 버튼 안의 아이콘/텍스트 클릭해도 동작하게 closest 사용
+  // -------------------------------------------------------
+  const reviewBtn = e.target.closest(".review-btn");
+  if (!reviewBtn) return; // ✅ 후기 버튼 아니면 여기서 끝
 
-  // ✅ 지원자 카드 리스트 이벤트 위임
-  $("#applicants-list")?.addEventListener("click", async (e) => {
-    const card = e.target.closest(".msg-card");
-    if (!card) return;
+  e.preventDefault();
+  e.stopPropagation();
 
-    const appId = card.dataset.id;
+  // -------------------------------------------------------
+  // 1) 어떤 지원서(card)인지 찾기
+  // -------------------------------------------------------
+  const card = reviewBtn.closest(".msg-card");
+  if (!card) return;
 
-	if (e.target.classList.contains("review-btn")) {
-	  e.preventDefault();
-	  e.stopPropagation();
+  // ✅ dataset.id에는 applicationId가 들어있게 만들었음(네 buildApplicantCard 기준)
+  const appId = card.dataset.id;
 
-	  // ✅ 버튼 모드 확인 (없으면 기본 WRITE로 처리)
-	  const mode = e.target.dataset.mode || "WRITE";
+  // -------------------------------------------------------
+  // 2) 버튼이 가지고 있는 mode/phase 읽기
+  // -------------------------------------------------------
+  // mode 종류:
+  // - WRITE    : 후기 작성 화면으로 이동
+  // - VIEW_ALL : 작성한 후기 전체 보기(모달 1개)
+  const mode = reviewBtn.dataset.mode || "WRITE";
 
-	  // =====================================================
-	  // (A) WRITE: 후기 작성 화면으로 이동
-	  // =====================================================
-	  if (mode === "WRITE") {
-	    state.selectedApplicationIdForReview = appId;
-	    __goto?.("reviewWrite");
-	    return;
-	  }
+  // phase 종류 (WRITE일 때만 의미 있음):
+  // - INITIAL / MONTH_1 / MONTH_3
+  // VIEW_ALL에서는 phase를 사용하지 않음(전체를 보여주니까)
+  const phase = reviewBtn.dataset.phase || "INITIAL";
 
-	  // =====================================================
-	  // (B) VIEW: 작성한 후기 보기 (Swal)
-	  // - 이번 스텝에서는 INITIAL만 보여줌
-	  // =====================================================
-	  const review = __initialReviewByAppId.get(String(appId));
+  // =====================================================
+  // (A) WRITE: 후기 작성 화면으로 이동
+  // =====================================================
+  if (mode === "WRITE") {
+    // ✅ 어떤 지원건에 대한 후기인지
+    state.selectedApplicationIdForReview = appId;
 
-	  // ✅ 방어: 맵에 없으면 안내
-	  if (!review) {
-	    await Swal.fire({
-	      icon: "info",
-	      title: "후기 없음",
-	      text: "작성된 후기를 찾을 수 없습니다.",
-	      confirmButtonText: "확인"
-	    });
-	    return;
-	  }
+    // ✅ 어떤 단계 후기인지 (INITIAL/MONTH_1/MONTH_3)
+    // - reviewWrite 화면에서 payload에 phase를 넣기 위해 필요
+    state.reviewPhase = phase;
 
-	  // ✅ 별점/코멘트/작성일 보여주기
-	  // - createdAt 포맷은 서버 형식에 따라 다를 수 있어 일단 문자열 그대로 노출
-	  await Swal.fire({
-	    icon: "info",
-	    title: "작성한 후기",
-	    html: `
-	      <div style="text-align:left; line-height:1.6;">
-	        <div><b>단계</b>: ${review.phase}</div>
-	        <div><b>별점</b>: ${review.rating}</div>
-	        <div><b>코멘트</b>: ${String(review.comment || "").replaceAll("\n", "<br/>")}</div>
-	        <div style="margin-top:8px; color:#666; font-size:12px;">
-	          작성일: ${review.createdAt || "-"}
-	        </div>
-	      </div>
-	    `,
-	    confirmButtonText: "확인"
-	  });
+    __goto?.("reviewWrite");
+    return;
+  }
 
-	  return;
-	}
+  // =====================================================
+  // (B) VIEW_ALL : 작성한 후기 전체 보기 (모달 1개)
+  // =====================================================
+  if (mode === "VIEW_ALL") {
+    // ✅ 해당 지원건의 후기 묶음 가져오기
+    // bucket 구조: { INITIAL?: review, MONTH_1?: review, MONTH_3?: review }
+    const bucket = __reviewsByAppId.get(String(appId)) || {};
 
+    // ✅ 보여줄 순서 고정
+    const orderedPhases = ["INITIAL", "MONTH_1", "MONTH_3"];
 
-    // =====================================================
-    // 2) 액션 버튼 영역(거절/채용/메시지)
-    // =====================================================
-    if (e.target.closest(".applicant-actions-vertical")) {
-      // (A) 거절
-      if (e.target.classList.contains("reject")) {
-        const result = await Swal.fire({
-          icon: "warning",
-          title: "지원자를 거절할까요?",
-          text: "거절 후에는 되돌릴 수 없습니다.",
-          showCancelButton: true,
-          confirmButtonText: "거절하기",
-          cancelButtonText: "취소",
-          confirmButtonColor: "#e74c3c",
-          cancelButtonColor: "#b0b0b0"
-        });
+    // ✅ 실제 존재하는 후기만 필터
+    const reviews = orderedPhases
+      .map((p) => bucket[p])
+      .filter(Boolean);
 
-        if (!result.isConfirmed) return;
-
-        try {
-          Swal.fire({
-            title: "처리 중...",
-            text: "잠시만 기다려주세요.",
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-          });
-
-          await updateApplicationStatus(appId, "REJECTED");
-
-          Swal.close();
-          card.remove();
-
-          await Swal.fire({
-            icon: "success",
-            title: "거절 완료",
-            text: "해당 지원자를 거절했습니다.",
-            confirmButtonText: "확인"
-          });
-        } catch (err) {
-          console.error(err);
-          Swal.close();
-
-          await Swal.fire({
-            icon: "error",
-            title: "처리 실패",
-            text: "상태 변경에 실패했습니다. 다시 시도해주세요.",
-            confirmButtonText: "확인"
-          });
-        }
-
-        return;
-      }
-
-      // (B) 채용
-      if (e.target.classList.contains("accept")) {
-        const result = await Swal.fire({
-          icon: "question",
-          title: "지원자를 채용할까요?",
-          text: "채용 처리 후에는 후기 작성이 가능해집니다.",
-          showCancelButton: true,
-          confirmButtonText: "채용하기",
-          cancelButtonText: "취소",
-          confirmButtonColor: "#2ecc71",
-          cancelButtonColor: "#b0b0b0"
-        });
-
-        if (!result.isConfirmed) return;
-
-        try {
-          Swal.fire({
-            title: "처리 중...",
-            text: "잠시만 기다려주세요.",
-            allowOutsideClick: false,
-            didOpen: () => Swal.showLoading()
-          });
-
-          await updateApplicationStatus(appId, "ACCEPTED");
-
-          Swal.close();
-
-          // ✅ UI 즉시 반영
-          card.classList.add("accepted");
-          card.classList.remove("rejected");
-
-          // ✅ 버튼 영역을 "채용됨 + 메시지"로 교체
-          const actions = card.querySelector(".applicant-actions-vertical");
-          if (actions) {
-            actions.innerHTML = `
-              <div class="hire-label">✅ 채용됨</div>
-              <button class="btn message">메시지</button>
-            `;
-          }
-
-          // ✅ 후기 버튼 없으면 추가
-          if (!card.querySelector(".review-btn")) {
-			card.insertAdjacentHTML(
-			  "beforeend",
-			  // ✅ (수정) 채용 직후에는 아직 후기가 없으니 WRITE 모드로 생성
-			  `<button class="btn outline review-btn" data-mode="WRITE">📝 후기 남기기</button>`
-			);
-
-          }
-
-          await Swal.fire({
-            icon: "success",
-            title: "채용 완료",
-            text: "해당 지원자를 채용 처리했습니다.",
-            confirmButtonText: "확인"
-          });
-        } catch (err) {
-          console.error(err);
-          Swal.close();
-
-          await Swal.fire({
-            icon: "error",
-            title: "처리 실패",
-            text: "상태 변경에 실패했습니다. 다시 시도해주세요.",
-            confirmButtonText: "확인"
-          });
-        }
-
-        return;
-      }
-
-      // (C) 메시지
-      if (e.target.classList.contains("message")) {
-        await Swal.fire({
-          icon: "info",
-          title: "준비 중",
-          text: "메시지 기능은 준비 중입니다.",
-          confirmButtonText: "확인"
-        });
-        return;
-      }
-
-      // 액션 영역이면 여기서 종료
+    // ✅ 방어: 아무 후기도 없을 경우
+    if (reviews.length === 0) {
+      await Swal.fire({
+        icon: "info",
+        title: "후기 없음",
+        text: "작성된 후기가 없습니다.",
+        confirmButtonText: "확인"
+      });
       return;
     }
 
-    // =====================================================
-    // 3) 카드 클릭 = 이력서 열기
-    // =====================================================
-    try {
-      Swal.fire({
-        title: "불러오는 중...",
-        text: "이력서를 가져오고 있습니다.",
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading()
-      });
+    // ✅ 단계명 한글 변환용 헬퍼
+    const phaseLabel = (p) => {
+      if (p === "INITIAL") return "채용 직후 후기";
+      if (p === "MONTH_1") return "1개월 후기";
+      if (p === "MONTH_3") return "3개월 후기";
+      return p;
+    };
 
-      const r = await fetchResumeByApplication(appId);
+    // ✅ 모달 HTML 생성
+    // - 코멘트 줄바꿈(\n) 처리
+    const html = reviews.map((r) => `
+      <div style="margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #eee; text-align:left;">
+        <div style="font-weight:bold; margin-bottom:6px;">
+          ${phaseLabel(r.phase)}
+        </div>
+        <div>⭐ 별점: ${r.rating}</div>
+        <div style="margin-top:4px;">
+          ${String(r.comment || "").replaceAll("\n", "<br/>")}
+        </div>
+        <div style="margin-top:6px; font-size:12px; color:#666;">
+          작성일: ${r.createdAt || "-"}
+        </div>
+      </div>
+    `).join("");
 
-      Swal.close();
+    // ✅ 모달 표시
+    await Swal.fire({
+      icon: "info",
+      title: "작성한 후기",
+      html,
+      width: 540,
+      confirmButtonText: "확인"
+    });
 
-      if (!r.ok) {
-        await Swal.fire({
-          icon: "info",
-          title: "이력서 없음",
-          text: "이력서가 등록되지 않은 지원자입니다.",
-          confirmButtonText: "확인"
-        });
-        return;
-      }
+    return;
+  }
 
-      openResumeViewMode(r.data);
-    } catch (err) {
-      console.error(err);
-      Swal.close();
-
-      await Swal.fire({
-        icon: "error",
-        title: "불러오기 실패",
-        text: "이력서를 불러오는 중 오류가 발생했습니다.",
-        confirmButtonText: "확인"
-      });
-    }
-  });
+  // --------------------------------------------------
+  // 여기까지 왔다면 정의되지 않은 mode (방어)
+  // --------------------------------------------------
+  console.warn("[review-btn] unknown mode:", mode);
+});
 }
+
 
 /**
  * ✅ 특정 공고의 지원자 목록을 불러와 applicants 화면으로 이동
@@ -439,25 +360,28 @@ export async function openApplicantsScreen(jobId) {
 	// - 여기서 "지원서 id"가 어떤 필드인지 바로 보임 (a.id? a.applicationId? 다른 이름?)
 	console.log("[debug] applicants.length:", applicants?.length);
 	console.log("[debug] applicants sample:", (applicants || []).slice(0, 3));
+	console.log("[debug] acceptedAt:", applicants?.[0]?.acceptedAt);
 
 	
 	// ✅ (추가) 현재 jobId 저장
 	__currentJobId = jobId;
 
 	// ✅ (추가) INITIAL 후기 맵 생성
-	__initialReviewByAppId = await buildInitialReviewMap(jobId);
+	// ✅ (수정) 후기 맵 생성 (phase별 저장)
+	__reviewsByAppId = await buildInitialReviewMap(jobId);
+
 	
 	// ✅ (디버그) INITIAL 후기 Map 키 확인
 	// - Map에 어떤 applicationId들이 들어가 있는지 (최대 10개)
-	console.log("[debug] initialReviewMap.size:", __initialReviewByAppId?.size);
+	console.log("[debug] __reviewsByAppId.size:", __reviewsByAppId?.size);
 
-	const keys = Array.from(__initialReviewByAppId?.keys?.() || []).slice(0, 10);
-	console.log("[debug] initialReviewMap.keys(sample):", keys);
+	const keys = Array.from(__reviewsByAppId?.keys?.() || []).slice(0, 10);
+	console.log("[debug] __reviewsByAppId.keys(sample):", keys);
 
 	// ✅ (디버그) Map value 샘플 1개 확인
 	const firstKey = keys[0];
 	if (firstKey) {
-	  console.log("[debug] initialReviewMap.firstValue:", __initialReviewByAppId.get(firstKey));
+	  console.log("[debug] __reviewsByAppId.firstValue:", __reviewsByAppId.get(firstKey));
 	}
 
 

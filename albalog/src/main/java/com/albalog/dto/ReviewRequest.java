@@ -2,6 +2,8 @@ package com.albalog.dto;
 
 import java.math.BigDecimal;
 
+import com.albalog.domain.ReviewPhase;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -16,4 +18,8 @@ public class ReviewRequest {
 
     // ✅ 코멘트
     private String comment;
+    
+ // ✅ 추가 필요
+    private ReviewPhase phase;
+
 }
