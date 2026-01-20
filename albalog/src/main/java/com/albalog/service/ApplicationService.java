@@ -28,8 +28,8 @@ public class ApplicationService {
     private final ResumeDao resumeDao;
     private final UserDao userDao;
     private final ResumeExperienceDao expDao;
+    private final ChatRoomService chatRoomService;
 
-    // ✅ 지원 등록
  // ✅ 지원 등록
     @Transactional
     public void apply(Long userId, ApplicationRequest request) {
@@ -125,7 +125,47 @@ public class ApplicationService {
         }).toList();
     }
     
+    
+    @Transactional
+    public void updateStatusByOwner(Long applicationId, Application.Status newStatus, Long ownerId) {
 
+        // ✅ 1) 지원서 조회
+        Application app = applicationRepository.findById(applicationId)
+                .orElseThrow(() -> new IllegalArgumentException("지원서를 찾을 수 없습니다."));
+
+        // ✅ 2) 권한 체크: 이 지원서가 달린 공고의 owner가 맞는지 확인
+        // - job_posts 테이블에 owner_id 컬럼이 있고, JobPost에 getOwnerId()가 있으니 그걸로 체크
+        JobPost post = app.getJobPost();
+        if (post == null) {
+            throw new IllegalStateException("지원서에 연결된 공고가 없습니다.");
+        }
+
+        if (!post.getOwnerId().equals(ownerId)) {
+            // ✅ 다른 사장님 공고 지원서를 조작하면 안 됨
+            throw new IllegalStateException("본인 공고의 지원서만 상태 변경할 수 있습니다.");
+        }
+
+        // ✅ 3) 상태 변경
+        app.setStatus(newStatus);
+
+        // ✅ 4) 채용(ACCEPTED)일 때만 acceptedAt 세팅 + 채팅방 생성
+        if (newStatus == Application.Status.ACCEPTED) {
+
+            // ✅ acceptedAt은 "처음 채용될 때만" 찍는 걸 추천
+            // - 이미 찍혀있으면 덮어쓰지 않음
+            if (app.getAcceptedAt() == null) {
+                app.setAcceptedAt(java.time.LocalDateTime.now());
+            }
+
+            // ✅ 채팅방 생성 (없으면 만들고, 있으면 그대로 반환)
+            // - 방은 applicationId 기준 1개만 있어야 해서 UNIQUE로 안전장치가 있음
+            chatRoomService.createIfAbsent(app);
+        }
+
+        // ✅ 5) 저장
+        // - 트랜잭션이라 더티체킹으로 저장되긴 하지만 명시적으로 save 해도 OK
+        applicationRepository.save(app);
+    }
 
 
 }

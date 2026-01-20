@@ -12,6 +12,9 @@ import {
 // - 지원자 목록에서 "이미 후기 작성했는지" 판단하기 위해 사용
 import { getReviewsByJob } from "../api/reviews.api.js";
 
+import { openChatScreen } from "./chat.screen.js";
+
+
 
 let __goto = null;
 let __bound = false;
@@ -387,15 +390,24 @@ $("#applicants-list")?.addEventListener("click", async (e) => {
     // -----------------------------
     // (C) 메시지
     // -----------------------------
-    if (e.target.classList.contains("message")) {
-      await Swal.fire({
-        icon: "info",
-        title: "준비 중",
-        text: "메시지 기능은 준비 중입니다.",
-        confirmButtonText: "확인"
-      });
-      return;
-    }
+	if (e.target.classList.contains("message")) {
+	  if (!appId) {
+	    await Swal.fire({
+	      icon: "error",
+	      title: "오류",
+	      text: "applicationId를 찾을 수 없습니다.",
+	      confirmButtonText: "확인"
+	    });
+	    return;
+	  }
+
+	  openChatScreen({
+	    applicationId: Number(appId),
+	    backTo: "applicants"
+	  });
+	  return;
+	}
+
 
     return;
   }

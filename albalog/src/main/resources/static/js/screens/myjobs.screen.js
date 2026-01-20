@@ -8,6 +8,8 @@ import { formatDateYMD } from "../core/utils.js"; // ✅ 이것만 사용
 import { getMe } from "../api/users.api.js";
 import { fetchMyApplications } from "../api/applications.api.js";
 import { getReviewsByWorker } from "../api/reviews.api.js";
+import { openChatScreen } from "./chat.screen.js";
+
 
 // ======================================================
 // ✅ HTML escape (XSS 방지)
@@ -214,25 +216,35 @@ export async function renderMyJobsScreen() {
   const listElForBind = $("#myjobs-list");
   if (listElForBind && listElForBind.dataset.bound !== "1") {
     listElForBind.dataset.bound = "1";
+	
+	
+	listElForBind.addEventListener("click", async (e) => {
+	  const btn = e.target.closest(".btn-myjob-message");
+	  if (!btn) return;
 
-    listElForBind.addEventListener("click", async (e) => {
-      const btn = e.target.closest(".btn-myjob-message");
-      if (!btn) return;
+	  e.preventDefault();
+	  e.stopPropagation();
 
-      e.preventDefault();
-      e.stopPropagation();
+	  const appId = btn.dataset.applicationId;
 
-      // ✅ 나중에 채팅/메시지 화면으로 이동할 때 applicationId 활용 가능
-      const appId = btn.dataset.applicationId;
+	  // ✅ applicationId가 비어있으면 방어
+	  if (!appId) {
+	    await Swal.fire({
+	      icon: "error",
+	      title: "오류",
+	      text: "applicationId를 찾을 수 없습니다.",
+	      confirmButtonText: "확인"
+	    });
+	    return;
+	  }
 
-      // 지금은 준비중 처리(요구사항에 맞춰 최소 동작)
-      await Swal.fire({
-        icon: "info",
-        title: "준비 중",
-        text: `메시지 기능은 준비 중입니다. (applicationId: ${appId || "-"})`,
-        confirmButtonText: "확인"
-      });
-    });
+	  // ✅ 채팅 화면 이동
+	  openChatScreen({
+	    applicationId: Number(appId),
+	    backTo: "myjobs"
+	  });
+	});
+
   }
 
   // 1) 후기 섹션

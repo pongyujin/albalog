@@ -745,8 +745,26 @@
 	    <button class="btn outline" id="btn-cancel-review">← 지원자 목록으로</button>
 	  </div>
 	</section>
+	
+		<!-- 12. 채팅 (NEW) -->
+		<section id="screen-chat" class="screen">
+			<div class="screen-title" id="chat-title">채팅</div>
+			<div class="screen-sub" id="chat-sub">채용된 지원자와만 대화할 수 있어요.</div>
 
- <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+			<!-- ✅ 메시지 리스트 -->
+			<div id="chat-list" class="chat-list"></div>
+
+			<!-- ✅ 입력 영역 -->
+			<div class="chat-input-row">
+				<input type="text" id="chat-input" placeholder="메시지를 입력하세요" />
+				<button class="btn primary" id="btn-chat-send">전송</button>
+			</div>
+
+			<button class="btn outline" id="btn-chat-back">← 뒤로</button>
+		</section>
+
+
+		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	
   <!-- ✅ JS도 contextPath 붙여서 로딩 -->
   <script type="module" src="/js/app.js"></script>

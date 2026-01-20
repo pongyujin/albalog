@@ -17,6 +17,7 @@ import { initApplicantsScreen, openApplicantsScreen } from "./screens/applicants
 import { initReviewWriteScreen, renderReviewWriteScreen } from "./screens/reviewWrite.screen.js";
 import { initResumeScreen, onEnterResumeScreen } from "./screens/resume.screen.js";
 import { renderMyJobsScreen } from "./screens/myjobs.screen.js";
+import { initChatScreen, openChatScreen, renderChatScreen } from "./screens/chat.screen.js";
 
 // Post
 import { initPostUI } from "./post/post.ui.js";
@@ -39,7 +40,8 @@ const screens = {
     reviews: $("#screen-reviews"),
     owner: $("#screen-owner"),
     applicants: $("#screen-applicants"),
-    reviewWrite: $("#screen-review-write")
+    reviewWrite: $("#screen-review-write"),
+	chat: $("#screen-chat") // ✅ 추가
 };
 
 // ======================================================
@@ -132,6 +134,7 @@ export async function goto(screenKey) {
     if (screenKey === "reviewWrite") renderReviewWriteScreen();
     if (screenKey === "resume") await onEnterResumeScreen();
     if (screenKey === "myjobs") await renderMyJobsScreen();
+	if (screenKey === "chat") await renderChatScreen();
 
     window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -300,6 +303,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     initApplicantsScreen({ goto });
     initReviewWriteScreen({ goto });
     initResumeScreen({ goto });
+	initChatScreen({ goto });
 
     initPostUI();
     initPostSubmit({ goto });

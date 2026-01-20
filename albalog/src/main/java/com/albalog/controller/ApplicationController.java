@@ -98,20 +98,30 @@ public class ApplicationController {
         return ResponseEntity.ok(dto);
     }
 
-
-
-    // 공고 상태 바꾸기 
     @PatchMapping("/{id}/status")
-    public ResponseEntity<?> updateStatus(@PathVariable Long id, @RequestParam Status status) {
-        Application app = applicationRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("지원서를 찾을 수 없습니다."));
+    public ResponseEntity<?> updateStatus(
+            @PathVariable Long id,
+            @RequestParam Status status,
+            HttpSession session
+    ) {
+        Long userId = (Long) session.getAttribute("LOGIN_USER_ID");
+        Boolean isOwner = (Boolean) session.getAttribute("LOGIN_IS_OWNER");
 
-        app.setStatus(status);
-        applicationRepository.save(app);
+        // ✅ 로그인 체크
+        if (userId == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("로그인이 필요합니다.");
+        }
+
+        // ✅ 사장님만 상태 변경 가능하도록 제한 (채용/거절은 사장님 권한)
+        if (Boolean.FALSE.equals(isOwner)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("사장님만 상태 변경이 가능합니다.");
+        }
+
+        // ✅ 진짜 로직은 서비스로!
+        applicationService.updateStatusByOwner(id, status, userId);
 
         return ResponseEntity.ok().build();
     }
-
 
     
     // 
