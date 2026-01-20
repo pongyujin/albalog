@@ -1,39 +1,41 @@
 // /js/screens/chat.screen.js
 // ✅ 채팅 화면 모듈 (SPA screen)
-// - 지금 단계 목표: REST로 "방 조회 + 메시지 히스토리 로딩" 까지
+// - REST: 채팅방 조회 + 히스토리 로딩
+// - STOMP: 실시간 메시지 송수신
 
 import { $ } from "../core/dom.js";
 
-let __goto = null;            // ✅ app.js에서 주입받을 goto 함수
-let __chatContext = null;     // ✅ 현재 채팅 화면에서 사용할 컨텍스트(applicationId, backTo, roomId 등)
+let __goto = null;              // app.js에서 주입받을 goto 함수
+let __chatContext = null;      // 현재 채팅 컨텍스트 (applicationId, roomId 등)
+let stompClient = null;        // STOMP 클라이언트 객체
 
-/**
- * ✅ 초기화 함수: app.js에서 goto를 주입해줌
- * - 순환 import 문제를 피하려고 이렇게 받는 게 안전함
- */
+// ======================================================
+// ✅ 초기화 함수 (app.js에서 goto 주입)
+// ======================================================
 export function initChatScreen({ goto }) {
   __goto = goto;
 
-  // ✅ 뒤로가기 버튼: 이전 화면으로 돌아가기
+  // -------------------------------
+  // 뒤로가기 버튼
+  // -------------------------------
   $("#btn-chat-back")?.addEventListener("click", () => {
     if (__chatContext?.backTo) {
       __goto(__chatContext.backTo);
       return;
     }
-    __goto("messages"); // fallback
+    __goto("messages");
   });
 
-  // ✅ 전송 버튼: 아직 STOMP 전이니까 일단 "나중에 연결"만 걸어둠
-  $("#btn-chat-send")?.addEventListener("click", () => {
-    // TODO: 다음 단계에서 STOMP 연결 후 여기서 send 할 예정
-    alert("다음 단계: STOMP 연결 후 전송 구현");
-  });
+  // -------------------------------
+  // 메시지 전송 버튼
+  // -------------------------------
+  $("#btn-chat-send")?.addEventListener("click", sendMessage);
 }
 
-/**
- * ✅ 외부(지원자목록/myjobs 등)에서 채팅 열 때 호출
- * - applicationId를 전달받아서 채팅 화면에서 사용할 컨텍스트로 저장
- */
+
+// ======================================================
+// ✅ 외부에서 채팅 열기 (myjobs, applicants 등)
+// ======================================================
 export async function openChatScreen({ applicationId, backTo }) {
   __chatContext = {
     applicationId,
@@ -41,15 +43,17 @@ export async function openChatScreen({ applicationId, backTo }) {
     roomId: null
   };
 
-  // ✅ 화면 이동
+  // 화면 이동
   __goto("chat");
 }
 
-/**
- * ✅ chat screen 진입 시 호출되는 렌더 함수
- * - 여기서 REST 호출로 room 조회 + 메시지 히스토리 로딩
- */
+
+// ======================================================
+// ✅ 채팅 화면 진입 시 렌더 함수
+// ======================================================
 export async function renderChatScreen() {
+
+  // applicationId 없으면 방 입장 불가
   if (!__chatContext?.applicationId) {
     $("#chat-title").textContent = "채팅";
     $("#chat-sub").textContent = "applicationId가 없습니다.";
@@ -58,26 +62,34 @@ export async function renderChatScreen() {
 
   const applicationId = __chatContext.applicationId;
 
-  // ✅ 화면 초기화
+  // -------------------------------
+  // 화면 초기화
+  // -------------------------------
   $("#chat-title").textContent = `채팅 (지원서 #${applicationId})`;
-  $("#chat-sub").textContent = "불러오는 중...";
+  $("#chat-sub").textContent = "채팅방 불러오는 중...";
   $("#chat-list").innerHTML = "";
 
   try {
-    // 1) 방 조회 (채용 전이면 404가 올 수 있음)
+    // -------------------------------
+    // 1) 채팅방 조회 (REST)
+    // -------------------------------
     const room = await fetchRoomByApplication(applicationId);
     __chatContext.roomId = room.roomId;
 
     $("#chat-sub").textContent = `채팅방 #${room.roomId}`;
 
-    // 2) 메시지 히스토리 조회
+    // -------------------------------
+    // 2) 메시지 히스토리 조회 (REST)
+    // -------------------------------
     const messages = await fetchMessages(room.roomId);
 
-    // 3) 렌더
-    messages.forEach(renderMessage);
+    // 오래된 순서로 정렬
+    messages.reverse().forEach(renderMessage);
 
-    // ✅ 다음 단계: 여기서 STOMP connect + subscribe 붙일 예정
-    // connectStomp(room.roomId);
+    // -------------------------------
+    // 3) STOMP 실시간 연결
+    // -------------------------------
+    connectStomp(room.roomId);
 
   } catch (e) {
     console.error(e);
@@ -85,52 +97,112 @@ export async function renderChatScreen() {
   }
 }
 
-/* =========================
-   REST 호출 함수들
-   ========================= */
 
-/**
- * ✅ applicationId → 채팅방 조회
- */
+/* ======================================================
+   ✅ REST API 호출
+   ====================================================== */
+
+// applicationId → 채팅방 조회
 async function fetchRoomByApplication(applicationId) {
   const res = await fetch(`/api/chat/rooms/by-application/${applicationId}`);
   if (!res.ok) {
-    // ✅ 서버가 text로 에러를 줄 수도 있어서 우선 text로 받기
     const text = await res.text();
     throw new Error(text || "채팅방 조회 실패");
   }
-  return await res.json(); // { roomId, applicationId, ownerId, workerId, jobPostId }
+  return await res.json();
 }
 
-/**
- * ✅ roomId → 메시지 목록 조회
- */
+// roomId → 메시지 히스토리 조회
 async function fetchMessages(roomId) {
   const res = await fetch(`/api/chat/rooms/${roomId}/messages?limit=50`);
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || "메시지 목록 조회 실패");
   }
-  return await res.json(); // [{id, senderId, content, createdAt, ...}]
+  return await res.json();
 }
 
-/* =========================
-   화면 렌더 함수들
-   ========================= */
 
-/**
- * ✅ 메시지 1개 렌더 (일단 단순하게)
- * - 다음 단계에서 "내 메시지/상대 메시지" 좌우 정렬도 붙이면 됨
- */
+/* ======================================================
+   ✅ STOMP 실시간 연결
+   ====================================================== */
+
+function connectStomp(roomId) {
+
+  // 이미 연결되어 있으면 재연결 방지
+  if (stompClient && stompClient.connected) {
+    return;
+  }
+
+  // SockJS 소켓 생성
+  const socket = new SockJS("/ws-chat");
+
+  // STOMP 클라이언트 생성
+  stompClient = Stomp.over(socket);
+
+  // 콘솔 로그 제거 (깔끔하게)
+  stompClient.debug = null;
+
+  // 서버 연결
+  stompClient.connect({}, () => {
+    console.log("✅ STOMP 연결 성공");
+
+    // -------------------------------
+    // 채팅방 구독
+    // -------------------------------
+    stompClient.subscribe(`/topic/chat.room.${roomId}`, (msg) => {
+      const data = JSON.parse(msg.body);
+      renderMessage(data);
+    });
+  });
+}
+
+
+/* ======================================================
+   ✅ 메시지 전송
+   ====================================================== */
+
+function sendMessage() {
+  const input = $("#chat-input");
+  const content = input.value.trim();
+
+  if (!content) return;
+
+  if (!stompClient || !stompClient.connected) {
+    Swal.fire({
+      icon: "error",
+      title: "연결 오류",
+      text: "채팅 서버에 연결되지 않았습니다.",
+      confirmButtonText: "확인"
+    });
+    return;
+  }
+
+  // 서버로 메시지 전송
+  stompClient.send("/app/chat.send", {}, JSON.stringify({
+    roomId: __chatContext.roomId,
+    content: content
+  }));
+
+  input.value = "";
+}
+
+
+/* ======================================================
+   ✅ 화면 렌더
+   ====================================================== */
+
 function renderMessage(m) {
   const list = $("#chat-list");
 
   const div = document.createElement("div");
   div.className = "chat-bubble";
+
+  // 내 메시지 / 상대 메시지 구분은 다음 단계에서 스타일링
   div.textContent = `[${m.senderId}] ${m.content}`;
 
   list.appendChild(div);
 
-  // ✅ 항상 맨 아래 보이게 스크롤
+  // 항상 맨 아래 스크롤
   list.scrollTop = list.scrollHeight;
 }

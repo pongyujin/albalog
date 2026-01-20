@@ -766,8 +766,14 @@
 
 		<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 	
+	
+	<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+	
   <!-- ✅ JS도 contextPath 붙여서 로딩 -->
   <script type="module" src="/js/app.js"></script>
+  
+  
 
 
 </body>
