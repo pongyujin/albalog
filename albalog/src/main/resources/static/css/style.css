@@ -1316,5 +1316,185 @@ select.step{ max-width: 96px; }
 }
 
 
+/* ======================================================
+   ✅ Chat Screen UI (알바로그 톤)
+   - chat.screen.js에서 사용하는 클래스 기준
+   ====================================================== */
+
+/* 채팅 화면 전체 래퍼(스크린 내부) */
+#screen-chat {
+  padding-bottom: 88px; /* ✅ 하단 입력바 공간 확보 */
+}
+
+/* 상단 타이틀/서브 */
+#screen-chat .screen-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+#chat-title {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.2px;
+}
+
+#chat-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #8b8b8b;
+}
+
+/* 채팅 리스트 컨테이너 */
+#chat-list {
+  margin-top: 12px;
+
+  /* ✅ 카드 느낌 + 스크롤 */
+  background: #f7f8fb;
+  border: 1px solid #eef0f5;
+  border-radius: 16px;
+  padding: 12px;
+
+  height: 56vh;            /* ✅ 화면 높이에 맞춰 적당히 */
+  overflow-y: auto;
+}
+
+/* 스크롤바 톤(크롬 계열) */
+#chat-list::-webkit-scrollbar {
+  width: 10px;
+}
+#chat-list::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.10);
+  border-radius: 10px;
+}
+#chat-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 메시지 한 줄(아이템) */
+.chat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 10px 0;
+}
+
+/* ✅ 내 메시지(오른쪽) */
+.chat-item.mine {
+  align-items: flex-end;
+}
+
+/* ✅ 상대 메시지(왼쪽) */
+.chat-item.other {
+  align-items: flex-start;
+}
+
+/* 말풍선 기본 */
+.chat-bubble {
+  max-width: 78%;
+  padding: 10px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  line-height: 1.35;
+  letter-spacing: -0.1px;
+  word-break: break-word;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.06);
+}
+
+/* 상대 말풍선: 화이트 카드 */
+.chat-item.other .chat-bubble {
+  background: #ffffff;
+  border: 1px solid #eef0f5;
+  color: #1f1f1f;
+  border-top-left-radius: 10px; /* 살짝 각 */
+}
+
+/* 내 말풍선: 앱 primary 톤에 가까운 블루 */
+.chat-item.mine .chat-bubble {
+  background: #2f6bff;      /* ✅ 기존 사이트 포인트톤 느낌 */
+  color: #ffffff;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-top-right-radius: 10px; /* 살짝 각 */
+}
+
+/* ===========================
+   채팅 읽음 표시
+=========================== */
+
+.chat-read {
+  margin-top: 0px;
+  margin-right: 5px;
+  margin-bottom: 3px;
+
+  font-size: 12px;
+  color: #2563eb;          /* 알바로그 포인트 블루 */
+  font-weight: 600;
+  text-align: right;
+}
+
+
+/* 내 메시지 쪽 읽음 */
+.chat-item.mine .chat-read {
+  color: #2563eb;          /* 사이트 primary 컬러 느낌 */
+  font-weight: 600;
+}
+
+
+
+/* ======================================================
+   ✅ 하단 입력 바 (sticky)
+   - index.jsp에 chat-input, btn-chat-send가 있어야 함
+   ====================================================== */
+
+.chat-input-bar {
+  position: sticky;
+  bottom: 0;
+  background: #ffffff;
+  border-top: 1px solid #eef0f5;
+  padding: 10px 10px;
+  margin-top: 12px;
+
+  display: flex;
+  gap: 10px;
+  align-items: center;
+
+  border-radius: 16px;
+  box-shadow: 0 -10px 22px rgba(0,0,0,0.05);
+}
+
+/* 입력창 */
+#chat-input {
+  flex: 1;
+  border: 1px solid #e9ecf3;
+  background: #f7f8fb;
+  border-radius: 14px;
+  padding: 10px 12px;
+  outline: none;
+  font-size: 14px;
+}
+
+#chat-input:focus {
+  border-color: rgba(47,107,255,0.45);
+  box-shadow: 0 0 0 3px rgba(47,107,255,0.12);
+}
+
+/* 전송 버튼은 기존 btn 스타일을 따라가되, 채팅용 크기만 살짝 */
+#btn-chat-send {
+  padding: 12px 14px;
+  width: 108px;
+  margin-top: 0px;
+
+  border-radius: 14px;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+
+/* (선택) 뒤로가기 버튼을 상단에 작게 */
+#btn-chat-back.btn.small {
+  padding: 8px 10px;
+  border-radius: 12px;
+}
 
 
